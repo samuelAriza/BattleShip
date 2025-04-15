@@ -4,8 +4,8 @@
   - [1.1 Purpose](#11-Purpose)
   - [1.2 Requiremets](#12-Requirements)
 - [2. Notational Conventions and Generic Grammar](#2-Notational Conventions and Generic Grammar)
-  - [Backus-Naur Form (BNF) ](#21-Backus-Naur Form (BNF) 
-  - [Protocol Message Examples ](#21-Protocol Message Examples) 
+  - [2.1 Backus-Naur Form (BNF) ](#21-Backus-Naur Form (BNF)) 
+  - [2.2 Protocol Message Examples ](#21-Protocol Message Examples) 
 - [3. System Diagrams](#3-System Diagrams)
   - [3.1 UML Class Diagram](#31-UML Class Diagram)
 
