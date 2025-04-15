@@ -1,13 +1,14 @@
 # Battle Ship Protocol
 ### Table of Contents
-- [1. Introduction](#1-Introduction)
-  - [1.1 Purpose](#11-Purpose)
-  - [1.2 Requiremets](#12-Requirements)
-- [2. Notational Conventions and Generic Grammar](#2-Notational Conventions and Generic Grammar)
-  - [2.1 Backus-Naur Form (BNF) ](#21-Backus-Naur Form (BNF)) 
-  - [2.2 Protocol Message Examples ](#21-Protocol Message Examples) 
-- [3. System Diagrams](#3-System Diagrams)
-  - [3.1 UML Class Diagram](#31-UML Class Diagram)
+- [1. Introduction](#1-introduction)
+  - [1.1 Purpose](#11-purpose)
+  - [1.2 Requirements](#12-requirements)
+- [2. Notational Conventions and Generic Grammar](#2-notational-conventions-and-generic-grammar)
+  - [2.1 Backus-Naur Form (BNF)](#21-backus-naur-form-bnf)
+  - [2.2 Protocol Message Examples](#22-protocol-message-examples)
+- [3. System Diagrams](#3-system-diagrams)
+  - [3.1 UML Class Diagram](#31-uml-class-diagram)
+
 
 ## Introduction
 ### 1.1 Purpose
