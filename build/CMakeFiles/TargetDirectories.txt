@@ -1,0 +1,10 @@
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/protocol.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/game_logic.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/battleship_server.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/bsclient.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/protocol_test.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/game_logic_test.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/phase_state_test.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/test.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/edit_cache.dir
+/home/samargo/Documents/universidad/telematica/BattleShip/build/CMakeFiles/rebuild_cache.dir

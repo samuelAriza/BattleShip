@@ -1,0 +1,2 @@
+/usr/bin/ar qc libprotocol.a CMakeFiles/protocol.dir/protocol/src/protocol.cpp.o CMakeFiles/protocol.dir/protocol/src/phase_state.cpp.o
+/usr/bin/ranlib libprotocol.a
