@@ -320,6 +320,19 @@ The SURRENDER message is processed in the PLAYING phase:
 - For high loads, a thread pool could be considered, but the current model is sufficient for the project’s scope (multiple pairs of players).
 
 ### 5.3 State Machine Diagram
+This section presents the Finite State Machines (FSMs) for the server and client components of the Battleship game, designed to provide a clear and concise representation of their general operational flow. The main goal is to illustrate the high-level structure and control of the game phases, capturing the logical progression of interactions between the server, clients, and players, as dictated by the designed Battleship game protocol.
+
+The server FSM describes the lifecycle of a game session, detailing how the server manages player registration, ship placement, gameplay, and game termination. The client FSM complements this by describing the client’s behavior, including user interactions and responses to server messages during the same game phases. Together, these FSMs offer a comprehensive view of the game’s flow, from session initiation to completion, focusing on protocol-driven state transitions and user-driven actions.
+
+It is important to note that this is an abstraction of low-level network connection details, such as those involving the socket API (e.g., socket creation, binding, or message transmission). Instead, the emphasis is on the logical flow of game states, the events that trigger state transitions (e.g., protocol messages, user inputs, or timeouts), and the actions taken in response (e.g., sending messages, updating game state, or displaying boards). This approach ensures that the FSMs serve as accessible and focused tools for understanding the core functionality of the Battleship server and client, making them valuable for developers, maintainers, and stakeholders interested in the game’s high-level design.
+
+In this regard, the FSMs for the server and client are presented, each with a detailed description of states, transitions, events/conditions, and associated actions in pseudocode.
+
+#### Server Finite State Machine
+![FSM Server](assets/FSM-Server.png)
+
+#### Client Finite State Machine
+![FSM Server](assets/FSM-Client.png)
 
 
 ## 6 Development Environment
