@@ -117,8 +117,9 @@ The following BNF (Backus-Naur Form) defines the formal grammar for the communic
 The BNF grammar below specifies all valid message types, their corresponding payloads, and the permissible structure and constraints of each component, including nicknames, coordinates, board states, and error reporting formats.
 
     <message> ::= <message-type> "|" <message-data>
-    <message-type> ::= "REGISTER" | "PLACE_SHIPS" | "SHOOT" | "STATUS" | "SURRENDER" | "GAME_OVER" | "ERROR" 
-    <message-data> ::= <register-data> | <place-ships-data> | <shoot-data> | <status-data> | <surrender-data> | <game-over-data> | <error-data> 
+    <message-type> ::= "REGISTER" | "PLACE_SHIPS" | "SHOOT" | "STATUS" | "SURRENDER" | "GAME_OVER" | "ERROR" | "ERROR" | "PLAYER_ID" 
+    <message-data> ::= <empty-data> | <register-data> | <place-ships-data> | <shoot-data> | <status-data> | <surrender-data> | <game-over-data> | <error-data> 
+    <empty-data> ::= ""
     <register-data> ::= <nickname> "," <email> 
     <nickname> ::= <string> 
     <email> ::= <string> "@" <string> "." <string> 
@@ -131,7 +132,7 @@ The BNF grammar below specifies all valid message types, their corresponding pay
     <letter> ::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" 
     <number> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" 
     <shoot-data> ::= <coord>
-    <status-data> ::= <turn> ";" <board-own> ";" <board-opponent> ";" <game-state> 
+    <status-data> ::= <turn> ";" <board-own> ";" <board-opponent> ";" <game-state> ";" <time-remainig> 
     <turn> ::= "YOUR_TURN" | "OPPONENT_TURN" 
     <board-own> ::= <cell-list> 
     <board-opponent> ::= <cell-list> 
@@ -139,9 +140,10 @@ The BNF grammar below specifies all valid message types, their corresponding pay
     <cell> ::= <coord> ":" <cell-state> 
     <cell-state> ::= "WATER" | "HIT" | "SUNK" | "SHIP" 
     <game-state> ::= "ONGOING" | "WAITING" | "ENDED" 
+    <time-remainig> ::= <digit> | <digit> <number>
     <surrender-data> ::= "" 
     <game-over-data> ::= <winner> 
-    <winner> ::= <nickname> | "NONE" 
+    <winner> ::= <nickname> | "NONE" | "YOU_WIN" | "YOU_LOSE"
     <error-data> ::= <error-code> "," <error-description> 
     <error-code> ::= <digit><digit><digit>
     <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" 
