@@ -117,39 +117,71 @@ The following BNF (Backus-Naur Form) defines the formal grammar for the communic
 The BNF grammar below specifies all valid message types, their corresponding payloads, and the permissible structure and constraints of each component, including nicknames, coordinates, board states, and error reporting formats.
 
     <message> ::= <message-type> "|" <message-data>
-    <message-type> ::= "REGISTER" | "PLACE_SHIPS" | "SHOOT" | "STATUS" | "SURRENDER" | "GAME_OVER" | "ERROR" | "ERROR" | "PLAYER_ID" 
-    <message-data> ::= <empty-data> | <register-data> | <place-ships-data> | <shoot-data> | <status-data> | <surrender-data> | <game-over-data> | <error-data> 
+    
+    <message-type> ::= "REGISTER" 
+                     | "PLACE_SHIPS" 
+                     | "SHOOT" 
+                     | "STATUS" 
+                     | "SURRENDER" 
+                     | "GAME_OVER" 
+                     | "ERROR" 
+                     | "PLAYER_ID"
+    
+    <message-data> ::= <empty-data> 
+                     | <register-data> 
+                     | <place-ships-data> 
+                     | <shoot-data> 
+                     | <status-data> 
+                     | <surrender-data> 
+                     | <game-over-data> 
+                     | <error-data>
+    
     <empty-data> ::= ""
-    <register-data> ::= <nickname> "," <email> 
-    <nickname> ::= <string> 
-    <email> ::= <string> "@" <string> "." <string> 
-    <place-ships-data> ::= <ship-list> 
-    <ship-list> ::= <ship> | <ship> ";" <ship-list> 
-    <ship> ::= <ship-type> ":" <coordinates> 
-    <ship-type> ::= "PORTAAVIONES" | "BUQUE" | "CRUCERO" | "DESTRUCTOR" | "SUBMARINO" 
-    <coordinates> ::= <coord>  | <coord> "," <coordinates> ","  
-    <coord> ::= <letter><number> 
-    <letter> ::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" 
-    <number> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" 
+    
+    <register-data> ::= <nickname> "," <email>
+    <nickname> ::= <string>
+    <email> ::= <string> "@" <string> "." <string>
+    
+    <place-ships-data> ::= <ship-list>
+    <ship-list> ::= <ship> | <ship> ";" <ship-list>
+    <ship> ::= <ship-type> ":" <coordinates>
+    <ship-type> ::= "PORTAAVIONES" 
+                  | "BUQUE" 
+                  | "CRUCERO" 
+                  | "DESTRUCTOR" 
+                  | "SUBMARINO"
+    
+    <coordinates> ::= <coord> | <coord> "," <coordinates> ","
+    <coord> ::= <letter><number>
+    <letter> ::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+    <number> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10"
+    
     <shoot-data> ::= <coord>
-    <status-data> ::= <turn> ";" <board-own> ";" <board-opponent> ";" <game-state> ";" <time-remainig> 
-    <turn> ::= "YOUR_TURN" | "OPPONENT_TURN" 
-    <board-own> ::= <cell-list> 
-    <board-opponent> ::= <cell-list> 
-    <cell-list> ::= <cell> | <cell> "," <cell-list> 
-    <cell> ::= <coord> ":" <cell-state> 
-    <cell-state> ::= "WATER" | "HIT" | "SUNK" | "SHIP" 
-    <game-state> ::= "ONGOING" | "WAITING" | "ENDED" 
-    <time-remainig> ::= <digit> | <digit> <number>
-    <surrender-data> ::= "" 
-    <game-over-data> ::= <winner> 
+    
+    <status-data> ::= <turn> ";" <board-own> ";" <board-opponent> ";" <game-state> ";" <time-remaining>
+    <turn> ::= "YOUR_TURN" | "OPPONENT_TURN"
+    <board-own> ::= <cell-list>
+    <board-opponent> ::= <cell-list>
+    <cell-list> ::= <cell> | <cell> "," <cell-list>
+    <cell> ::= <coord> ":" <cell-state>
+    <cell-state> ::= "WATER" | "HIT" | "SUNK" | "SHIP"
+    <game-state> ::= "ONGOING" | "WAITING" | "ENDED"
+    <time-remaining> ::= <digit> | <digit> <number>
+    
+    <surrender-data> ::= ""
+    
+    <game-over-data> ::= <winner>
     <winner> ::= <nickname> | "NONE" | "YOU_WIN" | "YOU_LOSE"
-    <error-data> ::= <error-code> "," <error-description> 
+    
+    <error-data> ::= <error-code> "," <error-description>
     <error-code> ::= <digit><digit><digit>
-    <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" 
-    <error-description> ::= <string> 
-    <string> ::= <char> | <char><string> 
+    
+    <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+    
+    <error-description> ::= <string>
+    <string> ::= <char> | <char><string>
     <char> ::= <letter> | <digit> | "_" | "-" | "."
+
 
 #### 4.3.2 Protocol Message Examples
 Below are example messages that conform strictly to the defined BNF grammar. These examples illustrate how each message type should be formatted and parsed during client-server communication.
