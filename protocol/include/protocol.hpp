@@ -11,37 +11,35 @@ namespace BattleShipProtocol
 {
 
     /**
-     * @class ProtocolError
-     * @brief Exception thrown for protocol-specific parsing or formatting errors.
+     * @brief Exception thrown when a protocol-related error occurs.
      */
     class ProtocolError : public std::runtime_error
     {
     public:
         /**
-         * @brief Constructs a new ProtocolError with a custom message.
-         * @param message Error message.
+         * @brief Constructs a ProtocolError with a message.
+         * @param message Error description.
          */
         explicit ProtocolError(const std::string &message) : std::runtime_error(message) {}
     };
 
     /**
-     * @enum MessageType
-     * @brief Represents the type of message exchanged between client and server.
+     * @brief Types of messages exchanged between client and server.
      */
     enum class MessageType
     {
-        REGISTER,    ///< Registration request.
-        PLACE_SHIPS, ///< Ship placement data.
-        SHOOT,       ///< Shot fired by a player.
-        STATUS,      ///< Response with game status.
-        GAME_OVER,   ///< Final result of the game.
-        ERROR,       ///< Error message.
-        PLAYER_ID    ///< Response containing assigned player ID.
+        REGISTER,    ///< Register a player
+        PLACE_SHIPS, ///< Send ship placements
+        SHOOT,       ///< Shoot at a coordinate
+        STATUS,      ///< Request or send game status
+        SURRENDER,   ///< Surrender the match
+        GAME_OVER,   ///< Game ended notification
+        ERROR,       ///< Error message
+        PLAYER_ID    ///< Player ID assignment
     };
 
     /**
-     * @enum ShipType
-     * @brief Enumerates all ship types available in the game.
+     * @brief Types of ships used in the game.
      */
     enum class ShipType
     {
@@ -53,8 +51,7 @@ namespace BattleShipProtocol
     };
 
     /**
-     * @enum Turn
-     * @brief Indicates whose turn it is in the game.
+     * @brief Indicates whose turn it is.
      */
     enum class Turn
     {
@@ -63,21 +60,19 @@ namespace BattleShipProtocol
     };
 
     /**
-     * @enum CellState
-     * @brief Represents the state of a cell in the game board.
+     * @brief State of a board cell.
      */
     enum class CellState
     {
-        WATER, ///< No ship present.
-        HIT,   ///< Ship hit but not sunk.
-        SUNK,  ///< Ship sunk.
-        SHIP,  ///< Ship placed but not hit.
-        MISS   ///< Shot missed.
+        WATER,
+        HIT,
+        SUNK,
+        SHIP,
+        MISS
     };
 
     /**
-     * @enum GameState
-     * @brief Represents the overall game status.
+     * @brief Current state of the game.
      */
     enum class GameState
     {
@@ -87,180 +82,269 @@ namespace BattleShipProtocol
     };
 
     /**
-     * @struct PlayerIdData
-     * @brief Contains the player ID assigned by the server.
+     * @brief Message content containing the player ID.
      */
     struct PlayerIdData
     {
-        int player_id;
+        int player_id; ///< Assigned ID (1 or 2)
     };
 
     /**
-     * @struct RegisterData
-     * @brief Contains the nickname and email of a player.
+     * @brief Data structure for player registration.
      */
     struct RegisterData
     {
-        std::string nickname;
-        std::string email;
+        std::string nickname; ///< Player's nickname
+        std::string email;    ///< Player's email
     };
 
     /**
-     * @struct Coordinate
-     * @brief Represents a coordinate on the board (e.g., "A5").
+     * @brief Board coordinate (e.g., A5).
      */
     struct Coordinate
     {
-        std::string letter; ///< Row indicator (A-J).
-        int number;         ///< Column indicator (1-10).
+        std::string letter; ///< Row label (letter)
+        int number;         ///< Column number
     };
 
     /**
-     * @struct Ship
-     * @brief Represents a ship with a type and a list of occupied coordinates.
+     * @brief Represents a ship and its occupied coordinates.
      */
     struct Ship
     {
-        ShipType type;
-        std::vector<Coordinate> coordinates;
+        ShipType type;                       ///< Type of ship
+        std::vector<Coordinate> coordinates; ///< List of occupied coordinates
     };
 
     /**
-     * @struct PlaceShipsData
-     * @brief Contains the list of ships a player places on the board.
+     * @brief Data structure for placing ships.
      */
     struct PlaceShipsData
     {
-        std::vector<Ship> ships;
+        std::vector<Ship> ships; ///< List of ships to place
     };
 
     /**
-     * @struct ShootData
-     * @brief Contains the coordinate of a fired shot.
+     * @brief Data structure for a shooting action.
      */
     struct ShootData
     {
-        Coordinate coordinate;
+        Coordinate coordinate; ///< Target coordinate
     };
 
     /**
-     * @struct Cell
-     * @brief Represents a cell on the board with its current state.
+     * @brief Represents a cell on the board.
      */
     struct Cell
     {
-        Coordinate coordinate;
-        CellState cellState;
+        Coordinate coordinate; ///< Coordinate of the cell
+        CellState cellState;   ///< State of the cell
     };
 
     /**
-     * @struct StatusData
-     * @brief Contains game status information from the server.
+     * @brief Game status report structure.
      */
     struct StatusData
     {
-        Turn turn;                       ///< Indicates whose turn it is.
-        std::vector<Cell> boardOwn;      ///< Player's own board.
-        std::vector<Cell> boardOpponent; ///< Opponent's board (partial view).
-        GameState gameState;             ///< Overall game status.
+        Turn turn;                       ///< Whose turn it is
+        std::vector<Cell> boardOwn;      ///< Player's own board
+        std::vector<Cell> boardOpponent; ///< Opponent's board
+        GameState gameState;             ///< Overall game state
+        int time_remaining;              ///< Remaining time (seconds)
     };
 
     /**
-     * @struct GameOverData
-     * @brief Contains the final result of the game.
+     * @brief Contains game result information.
      */
     struct GameOverData
     {
-        std::string winner; ///< Nickname of the winning player or "NONE".
+        std::string winner; ///< Nickname of the winner
     };
 
     /**
-     * @struct ErrorData
-     * @brief Contains error information.
+     * @brief Error description sent in response.
      */
     struct ErrorData
     {
-        int code;                ///< Error code.
-        std::string description; ///< Description of the error.
+        int code;                ///< Error code
+        std::string description; ///< Human-readable error description
     };
 
     /**
-     * @brief Variant type for all possible data types in a message.
+     * @brief Variant of all possible data types that a message can contain.
      */
     using MessageData = std::variant<
+        std::monostate,
         PlayerIdData,
         RegisterData,
         PlaceShipsData,
         ShootData,
         StatusData,
-        // SurrenderData
         GameOverData,
         ErrorData>;
 
     /**
-     * @struct Message
-     * @brief Represents a protocol message consisting of a type and associated data.
+     * @brief High-level structure of a message in the protocol.
      */
     struct Message
     {
-        MessageType type;
-        MessageData data;
+        MessageType type; ///< Type of message
+        MessageData data; ///< Associated data
     };
 
     /**
-     * @class Protocol
-     * @brief Implements the encoding and decoding of protocol messages.
+     * @brief Provides parsing and serialization methods for the Battleship protocol.
      */
     class Protocol
     {
     public:
         /**
-         * @brief Default constructor.
-         */
-        Protocol() = default;
-
-        /**
-         * @brief Parses a raw string into a structured Message object.
-         * @param raw_message The raw message string.
-         * @return A structured Message object.
-         * @throws ProtocolError if the message is malformed.
+         * @brief Parses a raw message string into a Message object.
+         * @param raw_message Raw string from the client/server.
+         * @return Parsed Message with type and data.
          */
         Message parse_message(std::string_view raw_message) const;
 
         /**
-         * @brief Builds a string from a structured Message object.
-         * @param msg The Message to encode.
-         * @return A formatted string suitable for transmission.
+         * @brief Serializes a Message object into a string.
+         * @param msg Message to serialize.
+         * @return String representation ready to send.
          */
         std::string build_message(const Message &msg) const;
 
     private:
-        // Conversion from strings to enums
+        // --- String to enum/struct conversions ---
+
+        /**
+         * @brief Converts string to MessageType.
+         * @param type_str Message type string.
+         * @return MessageType enum.
+         */
         MessageType string_to_message_type(std::string_view type_str) const;
+
+        /**
+         * @brief Converts string to ShipType.
+         * @param type Ship type string.
+         * @return ShipType enum.
+         */
         ShipType string_to_ship_type(std::string_view type) const;
+
+        /**
+         * @brief Converts string to Turn.
+         * @param turn Turn string.
+         * @return Turn enum.
+         */
         Turn string_to_turn(std::string_view turn) const;
+
+        /**
+         * @brief Converts string to CellState.
+         * @param state Cell state string.
+         * @return CellState enum.
+         */
         CellState string_to_cell_state(std::string_view state) const;
+
+        /**
+         * @brief Converts string to GameState.
+         * @param state Game state string.
+         * @return GameState enum.
+         */
         GameState string_to_game_state(std::string_view state) const;
+
+        /**
+         * @brief Converts string to Cell.
+         * @param cell_str String with cell data.
+         * @return Cell object.
+         */
         Cell string_to_cell(std::string_view cell_str) const;
+
+        /**
+         * @brief Converts string to Coordinate.
+         * @param coor Coordinate string.
+         * @return Coordinate object.
+         */
         Coordinate string_to_coordinate(std::string_view coor) const;
+
+        /**
+         * @brief Converts string to list of Coordinates.
+         * @param coor_str Comma-separated coordinates.
+         * @return Vector of Coordinate objects.
+         */
         std::vector<Coordinate> string_to_coordinates(std::string_view coor_str) const;
 
-        // Conversion from enums to strings
+        // --- Enum to string conversions ---
+
+        /**
+         * @brief Converts MessageType to string.
+         */
         std::string message_type_to_string(MessageType type) const;
+
+        /**
+         * @brief Converts ShipType to string.
+         */
         std::string ship_type_to_string(ShipType type) const;
+
+        /**
+         * @brief Converts Turn to string.
+         */
         std::string turn_to_string(Turn turn) const;
+
+        /**
+         * @brief Converts CellState to string.
+         */
         std::string cell_state_to_string(CellState state) const;
+
+        /**
+         * @brief Converts GameState to string.
+         */
         std::string game_state_to_string(GameState state) const;
+
+        /**
+         * @brief Converts a list of Coordinates to a single string.
+         */
         std::string coordinates_to_string(const std::vector<Coordinate> &coordinates) const;
 
-        // Parsing functions for each message type
+        // --- Specific data parsers ---
+
+        /**
+         * @brief Parses player ID data.
+         */
         PlayerIdData parse_player_id_data(std::string_view data) const;
+
+        /**
+         * @brief Parses register data.
+         */
         RegisterData parse_register_data(std::string_view data) const;
+
+        /**
+         * @brief Parses ship placement data.
+         */
         PlaceShipsData parse_place_ships_data(std::string_view data) const;
+
+        /**
+         * @brief Parses shooting data.
+         */
         ShootData parse_shoot_data(std::string_view data) const;
+
+        /**
+         * @brief Parses full game status data.
+         */
         StatusData parse_status_data(std::string_view data) const;
+
+        /**
+         * @brief Parses game over data.
+         */
         GameOverData parse_game_over_data(std::string_view data) const;
+
+        /**
+         * @brief Parses error data.
+         */
         ErrorData parse_error_data(std::string_view data) const;
+
+        /**
+         * @brief Parses board state from a raw string.
+         * @param board_str String with board cells.
+         * @return Vector of Cell objects.
+         */
         std::vector<Cell> parse_board_data(std::string_view board_str) const;
     };
 

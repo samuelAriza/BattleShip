@@ -18,6 +18,12 @@ namespace BattleShipProtocol
             throw ProtocolError("Invalid message format. Format expected: <message> ::= <message-type> \"|\" <message-data>");
         }
 
+        /*
+        if (type_data.find('|') != std::string_view::npos){
+            throw ProtocolError("Invalid message format. Format expected: <message> ::= <message-type> \"|\" <message-data>");
+        }
+        */
+
         Message msg;
         msg.type = string_to_message_type(type_str);
 
@@ -37,6 +43,9 @@ namespace BattleShipProtocol
             break;
         case MessageType::STATUS:
             msg.data = parse_status_data(type_data);
+            break;
+        case MessageType::SURRENDER:
+            msg.data = std::monostate{};
             break;
         case MessageType::GAME_OVER:
             msg.data = parse_game_over_data(type_data);
@@ -62,7 +71,8 @@ namespace BattleShipProtocol
             return MessageType::SHOOT;
         if (type_str == "STATUS")
             return MessageType::STATUS;
-        // if (type_str == "SURRENDER") return //MessageType::SURRENDER;
+        if (type_str == "SURRENDER")
+            return MessageType::SURRENDER;
         if (type_str == "GAME_OVER")
             return MessageType::GAME_OVER;
         if (type_str == "ERROR")
@@ -120,6 +130,17 @@ namespace BattleShipProtocol
 
         return registerData;
     }
+
+    /*
+    struct Ship{
+    ShipType type;
+    Coordinate coordinate;
+    };
+
+    struct PlaceShipsData {
+        std:: vector<Ship> ships;
+    };
+    */
 
     PlaceShipsData Protocol::parse_place_ships_data(std::string_view data) const
     {
@@ -274,6 +295,37 @@ namespace BattleShipProtocol
         Coordinate coordinate;
         char letter = coor.front();
         int number;
+
+        /*
+        Lo siguiente utiliza estructuras de retorno con desestructuracion en C++ 17 para extraer multiples valores de la funcion std::from_chars.
+
+        Realiza una conversion numerica eficiente, funcion de <charconv>, se utiliza para convertir datos numericos desde una secuencia de caracteres sin necesidad de usar std::stringstream o crear objetos std::string. Su firma es:
+
+        std::from_chars_result from_chars(const char* first, const char* last, T& value, int base = 10);
+
+        first: Puntero al inicio de la cadena de caracteres.
+        last: Puntero al final de la cadena.
+        value: Referencia a la variable donde se almacenará el resultado.
+        base: Base numérica (por defecto, 10).
+
+        struct from_chars_result {
+        const char* ptr;  // Puntero al primer carácter no convertido
+        std::errc ec;     // Código de error (std::errc::invalid_argument, std::errc::result_out_of_range, etc.)
+        };
+        auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+        auto [ptr, ec] usa estructuras de retorno con desestructuración (C++17) para extraer los valores del std::from_chars_result en dos variables separadas:
+
+        ptr: Un puntero (const char*) que apunta al primer carácter no convertido en la cadena.
+
+        ec: Un std::errc que indica si hubo errores durante la conversión.
+
+        Si ec no es std::errc(), significa que std::from_chars no pudo convertir la cadena:
+
+        std::errc::invalid_argument: La cadena no contenía un número válido.
+
+        std::errc::result_out_of_range: El número es demasiado grande para int.
+
+        */
         auto [ptr, ec] = std::from_chars(coor.substr(1, coor.length() - 1).data(), coor.substr(1, coor.length() - 1).data() + coor.substr(1, coor.length() - 1).size(), number);
         if (ec != std::errc())
         {
@@ -302,12 +354,13 @@ namespace BattleShipProtocol
         return shoot_data;
     }
 
+    // Función auxiliar para parsear un tablero desde una string_view
     std::vector<Cell> Protocol::parse_board_data(std::string_view board_str) const
     {
         std::vector<Cell> board;
         if (board_str.empty())
         {
-            return board;
+            return board; // Tablero vacío es válido, devuelve vector vacío
         }
 
         const char delim = ',';
@@ -322,7 +375,7 @@ namespace BattleShipProtocol
             board.emplace_back(string_to_cell(cell_str));
             start = end + 1;
         }
-
+        // Parsear el último elemento (o único si no hay delimitadores)
         std::string_view last_cell_str = board_str.substr(start);
         if (!last_cell_str.empty())
         {
@@ -331,11 +384,8 @@ namespace BattleShipProtocol
 
         return board;
     }
-
     StatusData Protocol::parse_status_data(std::string_view data) const
     {
-
-        // Eliminar el '\n'
         if (!data.empty() && data.back() == '\n')
         {
             data.remove_suffix(1);
@@ -347,47 +397,45 @@ namespace BattleShipProtocol
 
         StatusData status_data{};
         const char delim = ';';
-
         size_t start = 0, end = 0;
 
+        // 1. Turno
         end = data.find(delim, start);
         if (end == std::string_view::npos)
-        {
-            throw ProtocolError("Missing turn delimiter in STATUS data: " + std::string(data));
-        }
-        std::string_view turn_str = data.substr(start, end - start);
-        if (turn_str.empty())
-        {
-            throw ProtocolError("Turn field cannot be empty in STATUS data");
-        }
-
-        status_data.turn = string_to_turn(turn_str);
+            throw ProtocolError("Missing turn delimiter in STATUS data");
+        status_data.turn = string_to_turn(data.substr(start, end - start));
         start = end + 1;
 
+        // 2. Tablero propio
         end = data.find(delim, start);
         if (end == std::string_view::npos)
-        {
-            throw ProtocolError("Missing board_own delimiter in STATUS data: " + std::string(data));
-        }
-        std::string_view board_own_str = data.substr(start, end - start);
-        status_data.boardOwn = parse_board_data(board_own_str);
+            throw ProtocolError("Missing board_own delimiter in STATUS data");
+        status_data.boardOwn = parse_board_data(data.substr(start, end - start));
         start = end + 1;
 
+        // 3. Tablero del oponente
         end = data.find(delim, start);
         if (end == std::string_view::npos)
-        {
-            throw ProtocolError("Missing board_opponent delimiter in STATUS data: " + std::string(data));
-        }
-        std::string_view board_opponent_str = data.substr(start, end - start);
-        status_data.boardOpponent = parse_board_data(board_opponent_str);
+            throw ProtocolError("Missing board_opponent delimiter in STATUS data");
+        status_data.boardOpponent = parse_board_data(data.substr(start, end - start));
         start = end + 1;
 
-        std::string_view game_state_str = data.substr(start);
-        if (game_state_str.empty())
+        // 4. Estado del juego
+        end = data.find(delim, start);
+        if (end == std::string_view::npos)
+            throw ProtocolError("Missing game_state or time_remaining in STATUS data");
+        status_data.gameState = string_to_game_state(data.substr(start, end - start));
+        start = end + 1;
+
+        // 5. Tiempo restante
+        std::string_view time_str = data.substr(start);
+        int seconds;
+        auto [ptr, ec] = std::from_chars(time_str.data(), time_str.data() + time_str.size(), seconds);
+        if (ec != std::errc())
         {
-            throw ProtocolError("Game state cannot be empty in STATUS data");
+            throw ProtocolError("Invalid time_remaining in STATUS data: " + std::string(time_str));
         }
-        status_data.gameState = string_to_game_state(game_state_str);
+        status_data.time_remaining = seconds;
 
         return status_data;
     }
@@ -524,7 +572,8 @@ namespace BattleShipProtocol
             return "SHOOT";
         case MessageType::STATUS:
             return "STATUS";
-        // case MessageType::SURRENDER:   return "SURRENDER";
+        case MessageType::SURRENDER:
+            return "SURRENDER";
         case MessageType::GAME_OVER:
             return "GAME_OVER";
         case MessageType::ERROR:
@@ -600,6 +649,34 @@ namespace BattleShipProtocol
         }
     }
 
+    /*
+    std::ostringstream oss;
+
+    std::ostringstream es un stream de salida para construir cadenas eficientemente.
+
+    Actúa como un buffer en memoria, evitando concatenaciones costosas con std::string.
+
+    case MessageType::PLACE_SHIPS: {
+    oss << "PLACE_SHIPS|";
+
+    Detecta del tipo del mensaje, por lo que debe formatearse con la estructura segun BNF
+
+    Se escribe el prefijo "PLACE_SHIPS|" en el ostringstream, que será la cabecera del mensaje.
+
+    std::get<PlaceShipsData>(msg.data):
+    Extrae el valor almacenado en msg.data suponiendo que es de tipo PlaceShipsData.
+
+    const auto&:
+    const: No queremos modificar data.
+    auto&: Deducimos el tipo (PlaceShipsData) y evitamos copiar el valor.
+
+    msg.data es realmente el std::variant que tenemos para MessageData
+
+    std::get<T>(variant) obtiene el valor almacenado en un std::variant, si y solo si el tipo actual coincide con T.
+    Si msg.data contiene un PlaceShipsData, std::get<PlaceShipsData>(msg.data) lo devuelve.
+    Si msg.data contiene otro tipo, se genera una excepción std::bad_variant_access
+    */
+
     std::string Protocol::build_message(const Message &msg) const
     {
         std::ostringstream oss;
@@ -660,7 +737,13 @@ namespace BattleShipProtocol
             }
             oss << ";";
             oss << game_state_to_string(data.gameState);
-
+            oss << ";";
+            oss << data.time_remaining;
+            break;
+        }
+        case MessageType::SURRENDER:
+        {
+            oss << "SURRENDER|";
             break;
         }
         case MessageType::GAME_OVER:
