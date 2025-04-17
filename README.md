@@ -181,6 +181,108 @@ Returns a structured error code and description.
 ### 5.1 Class Diagram 
 ![UML Class Diagram](assets/class_diagram.png)
 ### 5.2 Concurrency Model
+#### Overview
+The Battleship server is designed to facilitate multiple concurrent game sessions for pairs of players, using TCP sockets via the Berkeley Sockets API. The concurrency model employs threads to manage client connections, game sessions and cleanup tasks, ensuring efficient resource utilization through synchronization mechanisms to avoid race conditions and responsiveness. The model is robust and scalable, and fits the project requirements for concurrent multiplayer, state synchronization and error handling.
+
+#### Threading Strategy
+The server utilizes a hybrid threading model with dedicated threads for core server tasks and per-session threads for game logic. The following threads are employed:
+
+- Main Thread:
+	- Initializes the server (creates socket, binds to IP/port, sets up listening).
+	- Spawns the acceptor and cleanup threads (`acceptor_thread` and `cleanup_thread`).
+	- Joins these threads to wait for their completion, ensuring graceful shutdown.
+- Acceptor Thread (`Server::accept_clients`):
+	- Runs in a loop to accept incoming client connections using `accept()`.
+	- Stores client file descriptors (FDs) in a thread-safe queue (`pending_clients_`).
+	- When two clients are queued, creates a new `GameSession`, assigns the clients as Player 1 and Player 2, and starts the session in a dedicated thread.
+- Cleanup Thread (`Server::cleanup_finished_sessions`):
+	- Periodically scans the `sessions_` map to remove finished game sessions (where `finished_ == true`).
+	- Runs every 1 second to minimize lock contention, using `std::this_thread::sleep_for`.
+	- Synchronizes access to `sessions_` with a mutex (`sessions_mutex_`).
+	- Uses a mutex (`pending_mutex_`) to synchronize access to `pending_clients_.`
+- Session Threads (`GameSession::run_session`):
+	- Each GameSession runs in its own thread (`session_thread_`), started via `GameSession::start`.
+	- Manages the game lifecycle for a pair of players across phases: REGISTRATION, PLACEMENT, PLAYING, and FINISHED.
+	- Handles client communication, processes messages (REGISTER, PLACE_SHIPS, SHOOT, SURRENDER), enforces game rules, and manages the 30-second turn timer.
+	- Terminates when the game ends (via victory, surrender, or disconnection) or when an error occurs, setting finished_ = true.
+#### Synchronization Mechanisms
+To ensure thread safety and prevent race conditions, the following synchronization mechanisms are implemented:
+	- Mutexes:
+		- `pending_mutex_`: Protects the `pending_clients_` queue during client enqueuing and dequeuing in `accept_clients`.
+		- `sessions_mutex_`: Guards the `sessions_` map when adding new sessions or removing finished ones in `accept_clients` and `cleanup_finished_sessions`.
+		- `log_mutex_`: Ensures thread-safe logging to the log file and console in `Server::log`, preventing interleaved writes.
+	- Thread-Safe Data Access:
+		- The `pending_clients_` queue is only modified under `pending_mutex_` lock.
+		- The `sessions_` map is accessed or modified under `sessions_mutex_` lock.
+		- Within a `GameSession`, the `players_` map and game state (`game_`) are accessed exclusively by the session’s thread, eliminating the need for additional locks within the session.
+	- Atomic Operations:
+		- The `running_` flag controls the acceptor and cleanup threads. It is written only during server shutdown and read by other threads, requiring no additional synchronization due to its single-write, multiple-read nature.
+
+#### Turn Management and Timer
+The 30-second turn limit is enforced during the PLAYING phase within each GameSession thread, as implemented in run_session. The implementation details are:
+- Timer Mechanism:
+	- The turn start time is recorded using t`urn_start_time_ = std::chrono::steady_clock::now()` at the beginning of each turn.
+	- The `receive_messages` function uses `select()` with a 1-second timeout to check for incoming messages, allowing periodic checks of the elapsed time.
+	- The elapsed time is calculated as `std::chrono::duration_cast<std::chrono::seconds>(now - turn_start_time_).count()`.
+	- If the elapsed time exceeds `TURN_TIMEOUT_SECONDS` (30 seconds), the turn is skipped, and the turn switches to the other player.
+
+- Turn Logic:
+	- The `current_player` variable tracks the active player (1 or 2).
+	- During a turn, the server waits for a SHOOT or SURRENDER message from the current player.
+	- On a valid SHOOT, the server processes the shot, updates the game state, sends STATUS messages to both players (including the remaining time), and switches `current_player`.
+	- On a SURRENDER, the server transitions to FINISHED, declares the opponent the winner, and sends GAME_OVER messages (YOU_WIN to the opponent, YOU_LOSE to the surrendering player).
+	- On timeout, the server logs the event, switches `current_player`, updates `turn_start_time_`, and sends STATUS messages to reflect the new turn.
+	- The `send_status` lambda calculates the remaining time (`time_remaining`) and includes it in STATUS messages during PLAYING, enabling clients to display a synchronized timer.
+
+- Timeout Handling:
+	- If a player exceeds 30 seconds without sending a valid SHOOT or SURRENDER, the `handle_timeout` lambda logs the event, switches the turn, and notifies both players with updated STATUS messages.
+	- The game continues rather than terminating, ensuring fair play.
+
+#### Handling Disconnections
+Disconnections are detected in `receive_messages` when `recv() `returns 0 (client closed connection) or a negative value (error). The `handle_disconnect` lambda in run_session:
+- Logs the disconnection event with the reason (e.g., "Client disconnected").
+- Closes the disconnected player’s socket and marks their FD as -1.
+- Notifies the remaining player with an ERROR message ("Opponent disconnected").
+- Closes the remaining player’s socket and marks their FD as -1.
+- Sets `finished_ = true`, allowing the cleanup thread to remove the session.
+
+#### Handling Surrender
+The SURRENDER message is processed in the PLAYING phase:
+- When a SURRENDER message is received from the current player, the server:
+	- Transitions the game to FINISHED via` game_->transition_to_finished()`.
+	- Identifies the winner (the opponent) and loser (the surrendering player).
+	- Sends a GAME_OVER message with YOU_WIN to the opponent and YOU_LOSE to the surrendering player.
+	- Sets `finished_ = true` to terminate the session.
+- The client provides an option to send SURRENDER (through a command line menu).
+
+#### Concurrency Flow
+1. Server Startup:
+	- Main thread initializes the server, creates the socket, and spawns acceptor and cleanup threads.
+2. Client Connection:
+	- Acceptor thread accepts clients, queues FDs in `pending_clients_`, and creates a `GameSession` when two clients are available.
+	- The session is started in a new thread and added to `sessions_`.
+3. Game Sessions:
+	- Session thread processes REGISTRATION (waits for REGISTER messages), PLACEMENT (waits for PLACE_SHIPS), and PLAYING (processes SHOOT or SURRENDER with a 30-second timer).
+	- Sends STATUS messages to synchronize game state and timer.
+	- Handles disconnections or surrenders, terminating the session when appropriate.
+4. Cleanup:
+	- Cleanup thread removes finished sessions from `sessions_` every second.
+5. Shutdown:
+	- Setting `running_ = false` stops the acceptor and cleanup threads.
+	- Session threads terminate when games end or clients disconnect.
+
+#### Error Handling
+- Socket Errors: Handled by throwing `ServerError` or `ProtocolError`, logged, and communicated to clients (e.g., ERROR message with code 400).
+- Thread Safety Violations: Prevented by mutexes and exclusive session-thread access to game state.
+- Timeouts: Managed by skipping the turn and notifying clients, maintaining game continuity.
+- Invalid Messages: Responded with ERROR messages (e.g., expecting SHOOT but receiving another type).
+- Disconnections/Surrenders: Gracefully terminate the session and notify the remaining player.
+
+#### Scalability Considerations
+- The model supports multiple concurrent sessions, limited by system resources (threads, FDs).
+- The cleanup thread ensures timely resource reclamation.
+- For high loads, a thread pool could be considered, but the current model is sufficient for the project’s scope (multiple pairs of players).
+
 ### 5.3 State Machine Diagram
 
 
