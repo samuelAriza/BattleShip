@@ -207,16 +207,18 @@ The server utilizes a hybrid threading model with dedicated threads for core ser
 	- Terminates when the game ends (via victory, surrender, or disconnection) or when an error occurs, setting finished_ = true.
 #### Synchronization Mechanisms
 To ensure thread safety and prevent race conditions, the following synchronization mechanisms are implemented:
-	- Mutexes:
-		- `pending_mutex_`: Protects the `pending_clients_` queue during client enqueuing and dequeuing in `accept_clients`.
-		- `sessions_mutex_`: Guards the `sessions_` map when adding new sessions or removing finished ones in `accept_clients` and `cleanup_finished_sessions`.
-		- `log_mutex_`: Ensures thread-safe logging to the log file and console in `Server::log`, preventing interleaved writes.
-	- Thread-Safe Data Access:
-		- The `pending_clients_` queue is only modified under `pending_mutex_` lock.
-		- The `sessions_` map is accessed or modified under `sessions_mutex_` lock.
-		- Within a `GameSession`, the `players_` map and game state (`game_`) are accessed exclusively by the session’s thread, eliminating the need for additional locks within the session.
-	- Atomic Operations:
-		- The `running_` flag controls the acceptor and cleanup threads. It is written only during server shutdown and read by other threads, requiring no additional synchronization due to its single-write, multiple-read nature.
+- Mutexes:
+    - `pending_mutex_`: Protects the `pending_clients_` queue during client enqueuing and dequeuing in `accept_clients`.
+    - `sessions_mutex_`: Guards the `sessions_` map when adding new sessions or removing finished ones in `accept_clients` and `cleanup_finished_sessions`.
+    - `log_mutex_`: Ensures thread-safe logging to the log file and console in `Server::log`, preventing interleaved writes.
+
+- Thread-Safe Data Access:
+    - The `pending_clients_` queue is only modified under `pending_mutex_` lock.
+    - The `sessions_` map is accessed or modified under `sessions_mutex_` lock.
+    - Within a `GameSession`, the `players_` map and game state (`game_`) are accessed exclusively by the session’s thread, eliminating the need for additional locks within the session.
+
+- Atomic Operations:
+    - The `running_` flag controls the acceptor and cleanup threads. It is written only during server shutdown and read by other threads, requiring no additional synchronization due to its single-write, multiple-read nature.
 
 #### Turn Management and Timer
 The 30-second turn limit is enforced during the PLAYING phase within each GameSession thread, as implemented in run_session. The implementation details are:
