@@ -5,12 +5,14 @@
 namespace BattleShipProtocol
 {
 
+    // Clase de prueba para agrupar casos relacionados con Protocol
     class ProtocolTest : public ::testing::Test
     {
     protected:
         Protocol protocol;
     };
 
+    // Pruebas para PLAYER_ID
     TEST_F(ProtocolTest, ParseMessage_PlayerIdData)
     {
         Message msg = protocol.parse_message("PLAYER_ID|1\n");
@@ -19,6 +21,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(player_id_data.player_id, 1);
     }
 
+    // Pruebas para REGISTER_DATA
     TEST_F(ProtocolTest, ParseMessage_RegisterData_ParsesCorrectly)
     {
         Message msg = protocol.parse_message("REGISTER|samargo,samargo@email.com\n");
@@ -70,6 +73,7 @@ namespace BattleShipProtocol
             BattleShipProtocol::ProtocolError);
     }
 
+    // Pruebas para PLACE_SHIPS
     TEST_F(ProtocolTest, ParseMessage_PlaceShips_ParsesCorrectly)
     {
         Message msg = protocol.parse_message("PLACE_SHIPS|PORTAAVIONES:A1;BUQUE:A2;CRUCERO:A3;DESTRUCTOR:A4;SUBMARINO:A5\n");
@@ -217,9 +221,16 @@ namespace BattleShipProtocol
         EXPECT_THROW(protocol.parse_message("SHOOT|$@\n"), BattleShipProtocol::ProtocolError);
     }
 
+    TEST_F(ProtocolTest, ParseMessage_Surrender)
+    {
+        Message msg = protocol.parse_message("SURRENDER|");
+        EXPECT_EQ(msg.type, MessageType::SURRENDER);
+        EXPECT_TRUE(std::holds_alternative<std::monostate>(msg.data));
+    }
+
     TEST_F(ProtocolTest, ParseMessage_Status_LongMessage_ParsesCorrectly)
     {
-        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:SHIP,A2:SHIP,A3:SHIP,A4:SHIP,A5:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,B1:SHIP,B2:SHIP,B3:SHIP,B4:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,C1:SHIP,C2:SHIP,C3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,D1:SHIP,D2:SHIP,D3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,E1:SHIP,E2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,F1:SHIP,F2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,G1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,H1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,I1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER;A1:SHIP,A2:SHIP,A3:SHIP,A4:SHIP,A5:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,B1:SHIP,B2:SHIP,B3:SHIP,B4:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,C1:SHIP,C2:SHIP,C3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,D1:SHIP,D2:SHIP,D3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,E1:SHIP,E2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,F1:SHIP,F2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,G1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,H1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,I1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER;ONGOING\n");
+        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:SHIP,A2:SHIP,A3:SHIP,A4:SHIP,A5:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,B1:SHIP,B2:SHIP,B3:SHIP,B4:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,C1:SHIP,C2:SHIP,C3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,D1:SHIP,D2:SHIP,D3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,E1:SHIP,E2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,F1:SHIP,F2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,G1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,H1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,I1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER;A1:SHIP,A2:SHIP,A3:SHIP,A4:SHIP,A5:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,B1:SHIP,B2:SHIP,B3:SHIP,B4:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,C1:SHIP,C2:SHIP,C3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,D1:SHIP,D2:SHIP,D3:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,E1:SHIP,E2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,F1:SHIP,F2:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,G1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,H1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,I1:SHIP,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER,X1:WATER;ONGOING;25\n");
 
         EXPECT_EQ(msg.type, BattleShipProtocol::MessageType::STATUS);
 
@@ -227,9 +238,11 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.turn, BattleShipProtocol::Turn::OPPONENT_TURN);
         EXPECT_EQ(status_data.gameState, BattleShipProtocol::GameState::ONGOING);
 
+        // Verificamos cantidad de celdas para asegurarnos que se parsearon todas
         ASSERT_EQ(status_data.boardOwn.size(), 100);
         ASSERT_EQ(status_data.boardOpponent.size(), 100);
 
+        // Verificar algunas celdas clave en boardOwn
         EXPECT_EQ(status_data.boardOwn[0].coordinate.letter, "A");
         EXPECT_EQ(status_data.boardOwn[0].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOwn[0].cellState, BattleShipProtocol::CellState::SHIP);
@@ -238,6 +251,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.boardOwn[5].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOwn[5].cellState, BattleShipProtocol::CellState::WATER);
 
+        // Verificar algunas celdas clave en boardOpponent
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.letter, "A");
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOpponent[0].cellState, BattleShipProtocol::CellState::SHIP);
@@ -245,11 +259,12 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.boardOpponent[10].coordinate.letter, "B");
         EXPECT_EQ(status_data.boardOpponent[10].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOpponent[10].cellState, BattleShipProtocol::CellState::SHIP);
+        EXPECT_EQ(status_data.time_remaining, 25);
     }
 
     TEST_F(ProtocolTest, ParseMessage_Status_ParsesCorrectly)
     {
-        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|YOUR_TURN;A1:SHIP,A2:WATER;B1:HIT,B2:SUNK;ONGOING\n");
+        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|YOUR_TURN;A1:SHIP,A2:WATER;B1:HIT,B2:SUNK;ONGOING;12\n");
 
         EXPECT_EQ(msg.type, BattleShipProtocol::MessageType::STATUS);
 
@@ -257,6 +272,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.turn, BattleShipProtocol::Turn::YOUR_TURN);
         EXPECT_EQ(status_data.gameState, BattleShipProtocol::GameState::ONGOING);
 
+        // Verificar celdas propias
         ASSERT_EQ(status_data.boardOwn.size(), 2);
         EXPECT_EQ(status_data.boardOwn[0].coordinate.letter, "A");
         EXPECT_EQ(status_data.boardOwn[0].coordinate.number, 1);
@@ -266,15 +282,18 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.boardOwn[1].coordinate.number, 2);
         EXPECT_EQ(status_data.boardOwn[1].cellState, BattleShipProtocol::CellState::WATER);
 
+        // Verificar celdas del oponente
         ASSERT_EQ(status_data.boardOpponent.size(), 2);
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.letter, "B");
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOpponent[0].cellState, BattleShipProtocol::CellState::HIT);
+        EXPECT_EQ(status_data.time_remaining, 12);
     }
 
+    // Caso 2: OPPONENT_TURN con tableros parcialmente llenos
     TEST_F(ProtocolTest, ParseMessage_Status_OpponentTurn)
     {
-        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:WATER;B1:SHIP;WAITING\n");
+        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:WATER;B1:SHIP;WAITING;18\n");
 
         EXPECT_EQ(msg.type, BattleShipProtocol::MessageType::STATUS);
 
@@ -291,22 +310,29 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.letter, "B");
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOpponent[0].cellState, BattleShipProtocol::CellState::SHIP);
+        EXPECT_EQ(status_data.time_remaining, 18);
     }
 
+    // Caso 3: Tableros vacíos
+    // EXPECT_EQ, EXPECT_TRUE son macros de asercion que se usan para verificar que una condicion se cumple en una prueba unitaria
+    // EXPECT_EQ(val1, val2) verifica la igualdad con el operador ==
+    // Si no son iguales, el test falla pero continúa ejecutándose (a diferencia de ASSERT_EQ, que detiene la prueba
     TEST_F(ProtocolTest, ParseMessage_StatusWithEmptyBoards_ParsesCorrectly)
     {
-        Message msg = protocol.parse_message("STATUS|YOUR_TURN;;;ENDED\n");
+        Message msg = protocol.parse_message("STATUS|YOUR_TURN;;;ENDED;0\n");
         EXPECT_EQ(msg.type, MessageType::STATUS);
         const auto &status_data = std::get<StatusData>(msg.data);
         EXPECT_EQ(status_data.turn, Turn::YOUR_TURN);
         EXPECT_TRUE(status_data.boardOwn.empty());
         EXPECT_TRUE(status_data.boardOpponent.empty());
         EXPECT_EQ(status_data.gameState, GameState::ENDED);
+        EXPECT_EQ(status_data.time_remaining, 0);
     }
 
+    // Estado complejo con muchas celdas
     TEST_F(ProtocolTest, ParseMessage_Status_MultipleCells)
     {
-        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:SHIP,A2:SUNK,B3:HIT;C1:WATER,D4:SHIP;ONGOING\n");
+        BattleShipProtocol::Message msg = protocol.parse_message("STATUS|OPPONENT_TURN;A1:SHIP,A2:SUNK,B3:HIT;C1:WATER,D4:SHIP;ONGOING;10\n");
 
         EXPECT_EQ(msg.type, BattleShipProtocol::MessageType::STATUS);
 
@@ -323,6 +349,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.letter, "C");
         EXPECT_EQ(status_data.boardOpponent[0].coordinate.number, 1);
         EXPECT_EQ(status_data.boardOpponent[0].cellState, BattleShipProtocol::CellState::WATER);
+        EXPECT_EQ(status_data.time_remaining, 10);
     }
 
     TEST_F(ProtocolTest, ParseMessage_Status_InvalidFormat)
@@ -421,6 +448,7 @@ namespace BattleShipProtocol
             BattleShipProtocol::ProtocolError);
     }
 
+    // REGISTER
     TEST_F(ProtocolTest, BuildMessage_Register_ReturnsCorrectFormat)
     {
         Message msg;
@@ -431,6 +459,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(protocol.build_message(msg), expected);
     }
 
+    // PLACE_SHIPS
     TEST_F(ProtocolTest, BuildMessage_PlaceShips)
     {
         Ship s1{ShipType::PORTAAVIONES, {{"A", 1}, {"A", 2}, {"A", 3}}};
@@ -442,6 +471,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(protocol.build_message(msg), expected);
     }
 
+    // SHOOT
     TEST_F(ProtocolTest, BuildMessage_Shoot)
     {
         ShootData shoot{{"C", 5}};
@@ -450,6 +480,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(protocol.build_message(msg), "SHOOT|C5\n");
     }
 
+    // STATUS
     TEST_F(ProtocolTest, BuildMessage_Status)
     {
         StatusData data;
@@ -461,13 +492,24 @@ namespace BattleShipProtocol
             {{"B", 1}, CellState::WATER},
             {{"B", 2}, CellState::SUNK}};
         data.gameState = GameState::ONGOING;
+        data.time_remaining = 10;
 
         Message msg{MessageType::STATUS, data};
 
-        std::string expected = "STATUS|YOUR_TURN;A1:SHIP,A2:HIT;B1:WATER,B2:SUNK;ONGOING\n";
+        std::string expected = "STATUS|YOUR_TURN;A1:SHIP,A2:HIT;B1:WATER,B2:SUNK;ONGOING;10\n";
         EXPECT_EQ(protocol.build_message(msg), expected);
     }
 
+    // SURRENDER
+    TEST_F(ProtocolTest, BuildMessage_Surrender)
+    {
+        Message msg{MessageType::SURRENDER, std::monostate{}};
+
+        std::string expected = "SURRENDER|\n";
+        EXPECT_EQ(protocol.build_message(msg), expected);
+    }
+
+    // GAME_OVER
     TEST_F(ProtocolTest, BuildMessage_GameOver)
     {
         GameOverData over{"Carlos"};
@@ -476,6 +518,7 @@ namespace BattleShipProtocol
         EXPECT_EQ(protocol.build_message(msg), "GAME_OVER|Carlos\n");
     }
 
+    // ERROR
     TEST_F(ProtocolTest, BuildMessage_Error)
     {
         ErrorData err{500, "Internal server error"};

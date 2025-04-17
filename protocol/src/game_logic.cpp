@@ -1,6 +1,4 @@
-/// \file game_logic.cpp
-/// \brief Implements the GameLogic class for managing Battleship game state and rules.
-
+// ~/universidad/telematica/test/protocol/src/game_logic.cpp
 #include "../include/game_logic.hpp"
 #include "../include/protocol.hpp"
 #include <algorithm>
@@ -9,6 +7,8 @@
 
 namespace BattleShipProtocol
 {
+    // Lista de inicializacion de miembros. Es mas eficiente de inicializar dentro del cuerpo del constructor porque:
+    //  Inicializalos atributos directamente (sin primero crear valores por defecto y luego sobreescribirlos), es obligatoria para incializar referencias, constantes y algunos objetos complejos
     GameLogic::GameLogic() : state_(), current_turn_(1), game_over_(false)
     {
         for (int i = 1; i <= MAX_PLAYERS; ++i)
@@ -57,6 +57,11 @@ namespace BattleShipProtocol
         return players_.at(player_id).ships.size();
     }
 
+    // Mensaje del tipo REGISTER|<register-data>
+    //<register-data> ::= <nickname> "," <email>
+    //<nickname> ::= <string>
+    //<email> ::= <string> "@" <string> "." <string>
+
     void GameLogic::place_ships(int player_id, const PlaceShipsData &data)
     {
         if (player_id != 1 && player_id != 2)
@@ -76,6 +81,9 @@ namespace BattleShipProtocol
 
     void GameLogic::process_shot(int player_id, const ShootData &shot)
     {
+        // if (player_id != current_turn_) {
+        // throw GameLogicError("Not Player " + std::to_string(player_id) + "'s turn");
+        //}
         if (player_id == current_turn_)
         {
             if (game_over_)
@@ -99,10 +107,26 @@ namespace BattleShipProtocol
             }
             else
             {
+                // std::cout << "[DEBUG] Disparo inválido (coordenada ya atacada), turno sigue con Jugador " << current_turn_ << std::endl;
+                // Disparo inválido: no cambiar el turno, notificar error
                 throw GameLogicError("Coordenada ya atacada: " + shot.coordinate.letter + std::to_string(shot.coordinate.number));
             }
         }
     }
+
+    /*
+    void GameLogic::surrender(int player_id) {
+        if (player_id != 1 && player_id != 2) {
+            throw GameLogicError("Invalid player ID: " + std::to_string(player_id));
+        }
+        if (game_over_) {
+            throw GameLogicError("Game is already over");
+        }
+        players_[player_id].surrendered = true;
+        game_over_ = true;
+        winner_ = players_[player_id == 1 ? 2 : 1].nickname;
+    }
+    */
 
     StatusData GameLogic::get_status(int player_id) const
     {
@@ -112,6 +136,8 @@ namespace BattleShipProtocol
         }
         StatusData status;
         status.turn = (current_turn_ == player_id) ? Turn::YOUR_TURN : Turn::OPPONENT_TURN;
+        //.begin devuelve un iterador apuntando al primer elemento del array board de player_
+        // Realiza copia del array map usando constructor de rango
         status.boardOwn = std::vector<Cell>(players_.at(player_id).board.begin(), players_.at(player_id).board.end());
         status.boardOpponent = std::vector<Cell>(players_.at(player_id == 1 ? 2 : 1).board.begin(), players_.at(player_id == 1 ? 2 : 1).board.end());
         if (get_phase() == PhaseState::Phase::FINISHED)
@@ -154,8 +180,10 @@ namespace BattleShipProtocol
         return it->second.nickname;
     }
 
+    // coord_to_index(shot);
     int GameLogic::coord_to_index(const Coordinate &coord) const
     {
+        // Resta de valores ASCII, row termina siendo una posicion basada en 0
         int row = coord.letter[0] - 'A';
         int col = coord.number - 1;
         if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
@@ -184,6 +212,7 @@ namespace BattleShipProtocol
             {ShipType::SUBMARINO, {3, 1}}};
         std::map<ShipType, int> ship_counts;
 
+        // Para cada barco, se cuenta el tipo y validar las coordenadas
         for (const auto &ship : ships)
         {
             ship_counts[ship.type]++;
@@ -194,6 +223,7 @@ namespace BattleShipProtocol
             }
         }
 
+        // Validar cantidad de barcos
         for (const auto &[type, count_size] : required_ships)
         {
             if (ship_counts[type] != count_size.first)
@@ -202,6 +232,7 @@ namespace BattleShipProtocol
             }
         }
 
+        // Colocación sin superposición
         std::array<bool, BOARD_SIZE * BOARD_SIZE> occupied{};
         for (const auto &ship : ships)
         {
@@ -227,6 +258,7 @@ namespace BattleShipProtocol
             int idx = coord_to_index(shot);
             auto &target_board = players_[target_id].board;
 
+            // Verificar si la coordenada ya fue atacada
             if (target_board[idx].cellState == CellState::HIT ||
                 target_board[idx].cellState == CellState::SUNK ||
                 target_board[idx].cellState == CellState::MISS)
@@ -234,13 +266,15 @@ namespace BattleShipProtocol
 
                 std::cout << "[DEBUG] Coordenada " << shot.letter << shot.number
                           << " ya fue atacada. Selecciona otra." << std::endl;
-                return false;
+                return false; // Disparo inválido, no se cambia de turno
             }
 
+            // Coordenada válida, aplicar el disparo
             if (target_board[idx].cellState == CellState::SHIP)
             {
                 target_board[idx].cellState = CellState::HIT;
 
+                // Verificar si se hundió un barco
                 for (auto &ship : players_[target_id].ships)
                 {
                     bool all_hit = true;
@@ -267,7 +301,7 @@ namespace BattleShipProtocol
                 target_board[idx].cellState = CellState::MISS;
             }
 
-            return true;
+            return true; // Disparo válido, puede cambiar de turno
         }
         catch (const std::exception &e)
         {
@@ -280,4 +314,4 @@ namespace BattleShipProtocol
         return players_.at(player_id).ships_remaining == 0;
     }
 
-}
+} // namespace BattleShipProtocol
