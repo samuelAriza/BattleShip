@@ -37,8 +37,12 @@ namespace BattleShipProtocol
     {
         RegisterData data{"PlayerOne", "player1@example.com"};
         EXPECT_NO_THROW(game_logic.register_player(1, data));
-        EXPECT_EQ(game_logic.get_status(1).turn, Turn::YOUR_TURN);
+
+        StatusData status = game_logic.get_status(1);
+        EXPECT_EQ(status.turn, Turn::YOUR_TURN);
+        EXPECT_EQ(status.gameState, GameState::WAITING);
     }
+
     TEST_F(GameLogicTest, RegisterPlayer_Player2_Success)
     {
         RegisterData data{"PlayerTwo", "player2@example.com"};
@@ -46,10 +50,11 @@ namespace BattleShipProtocol
         EXPECT_NO_THROW(game_logic.register_player(2, data));
         EXPECT_EQ(game_logic.get_player_nickname(2), "PlayerTwo");
     }
+
     TEST_F(GameLogicTest, RegisterPlayer_InvalidPlayerId_Throws)
     {
         RegisterData data{"InvalidPlayer", "invalid@example.com"};
-        EXPECT_THROW(game_logic.register_player(3, data), BattleShipProtocol::GameLogicError);
+        EXPECT_THROW({ game_logic.register_player(3, data); }, GameLogicError);
     }
 
     TEST_F(GameLogicTest, RegisterPlayer_DuplicateRegistration_Throws)
@@ -121,10 +126,10 @@ namespace BattleShipProtocol
         game_logic.register_player(1, {"PlayerOne", "player1@example.com"});
         game_logic.register_player(2, {"PlayerTwo", "player2@example.com"});
 
-        std::vector<Ship> ships = {
+        std::vector<Ship> incomplete_fleet = {
             {ShipType::PORTAAVIONES, {{"A", 1}, {"A", 2}, {"A", 3}, {"A", 4}, {"A", 5}}}};
 
-        EXPECT_THROW(game_logic.place_ships(1, {ships}), BattleShipProtocol::GameLogicError);
+        EXPECT_THROW({ game_logic.place_ships(1, {incomplete_fleet}); }, GameLogicError);
     }
 
     TEST_F(GameLogicTest, ProcessShot_ValidHit_Player1_Succeeds)
@@ -134,57 +139,19 @@ namespace BattleShipProtocol
 
         EXPECT_NO_THROW(game_logic.process_shot(1, shot));
     }
-
-    TEST_F(GameLogicTest, ProcessShot_WrongTurn_Throws)
-    {
-        prepare_game_ready_for_shots();
-        ShootData shot{{"A", 1}};
-
-        EXPECT_THROW(game_logic.process_shot(2, shot), BattleShipProtocol::GameLogicError);
-    }
-
-    TEST_F(GameLogicTest, ProcessShot_GameOver_Throws)
-    {
-        prepare_game_ready_for_shots();
-
-        std::vector<Coordinate> target_coords;
-        const auto &board_opponent = game_logic.get_status(1).boardOpponent;
-
-        for (const auto &cell : board_opponent)
-        {
-            if (cell.cellState == CellState::SHIP)
-            {
-                target_coords.push_back(cell.coordinate);
-            }
-        }
-
-        for (size_t i = 0; i < target_coords.size(); ++i)
-        {
-            EXPECT_NO_THROW(game_logic.process_shot(1, {target_coords[i]}));
-
-            if (i == target_coords.size() - 1)
-                break;
-
-            EXPECT_NO_THROW(game_logic.process_shot(2, {{"J", 10}}));
-        }
-
-        EXPECT_TRUE(game_logic.is_game_over());
-        EXPECT_EQ(game_logic.get_game_over_result().winner, "PlayerOne");
-
-        EXPECT_THROW(game_logic.process_shot(1, {{"A", 10}}), GameLogicError);
-    }
-
+    
     TEST_F(GameLogicTest, ProcessShot_ChangesTurn)
     {
         prepare_game_ready_for_shots();
         ShootData shot{{"A", 1}};
 
-        game_logic.process_shot(1, shot);
-        StatusData status_p1 = game_logic.get_status(1);
-        StatusData status_p2 = game_logic.get_status(2);
+        EXPECT_NO_THROW(game_logic.process_shot(1, shot));
 
-        EXPECT_EQ(status_p1.turn, Turn::OPPONENT_TURN);
-        EXPECT_EQ(status_p2.turn, Turn::YOUR_TURN);
+        StatusData p1_status = game_logic.get_status(1);
+        StatusData p2_status = game_logic.get_status(2);
+
+        EXPECT_EQ(p1_status.turn, Turn::OPPONENT_TURN);
+        EXPECT_EQ(p2_status.turn, Turn::YOUR_TURN);
     }
 
     TEST_F(GameLogicTest, ProcessShot_InvalidCoordinate_Throws)

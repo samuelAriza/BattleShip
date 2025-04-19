@@ -81,8 +81,8 @@ namespace BattleShipProtocol
 
     void GameLogic::process_shot(int player_id, const ShootData &shot)
     {
-        // if (player_id != current_turn_) {
-        // throw GameLogicError("Not Player " + std::to_string(player_id) + "'s turn");
+        //if (player_id != current_turn_) {
+        //    throw GameLogicError("Not Player " + std::to_string(player_id) + "'s turn");
         //}
         if (player_id == current_turn_)
         {
@@ -91,8 +91,6 @@ namespace BattleShipProtocol
                 throw GameLogicError("Game is already over");
             }
             int target_id = (player_id == 1) ? 2 : 1;
-            std::cout << "[DEBUG] Procesando disparo de Jugador " << player_id << " a Jugador " << target_id
-                      << " en coordenada: " << shot.coordinate.letter << shot.coordinate.number << std::endl;
             bool valid_shot = update_board(player_id, target_id, shot.coordinate);
             if (valid_shot)
             {
@@ -101,14 +99,10 @@ namespace BattleShipProtocol
                 {
                     game_over_ = true;
                     winner_ = players_[player_id].nickname;
-                    std::cout << "[DEBUG] Todos los barcos de Jugador " << target_id << " hundidos, ganador: " << winner_.value() << std::endl;
                 }
-                std::cout << "[DEBUG] Disparo válido, turno cambiado a Jugador " << current_turn_ << std::endl;
             }
             else
             {
-                // std::cout << "[DEBUG] Disparo inválido (coordenada ya atacada), turno sigue con Jugador " << current_turn_ << std::endl;
-                // Disparo inválido: no cambiar el turno, notificar error
                 throw GameLogicError("Coordenada ya atacada: " + shot.coordinate.letter + std::to_string(shot.coordinate.number));
             }
         }
@@ -263,9 +257,6 @@ namespace BattleShipProtocol
                 target_board[idx].cellState == CellState::SUNK ||
                 target_board[idx].cellState == CellState::MISS)
             {
-
-                std::cout << "[DEBUG] Coordenada " << shot.letter << shot.number
-                          << " ya fue atacada. Selecciona otra." << std::endl;
                 return false; // Disparo inválido, no se cambia de turno
             }
 

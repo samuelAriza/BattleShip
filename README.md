@@ -20,9 +20,9 @@
   - [5.1 Class Diagram](#51-class-diagram)
   - [5.2 Concurrency Model](#52-concurrency-model)
   - [5.3 State Machine Diagram](#53-state-machine-diagram)
-- [6. Development Environment](#6-development-environment)
-  - [6.1 Tools and Libraries Used](#61-tools-and-libraries-used)
-  - [6.2 Language-Specific Notes](#62-language-specific-notes)
+- [6. Implementation Details](#6-implementation-details)
+  - [6.1 Development Environment](#61-development-environment)
+  - [6.2 Tools and Libraries Used](#62-tools-and-libraries-used)
   - [6.3 Deployment Instructions](#63-deployment-instructions)
     - [6.3.1 Server Deployment](#631-server-deployment)
     - [6.3.2 Client Execution](#632-client-execution)
@@ -352,7 +352,7 @@ These finite state machines abstract low-level details of the network connection
 | Ethernet  | Realtek PCIe Gigabit Ethernet Controller |
 | OS |  Linux (kernel 6.12.20-amd64 |
 
-### 6.1 Tools and Libraries Used
+### 6.2 Tools and Libraries Used
 The following tools and libraries were utilized to develop, test, and deploy the Battleship game:
 - Compilers:
 	- g++ (Debian 14.2.0-19) 14.2.0
@@ -366,8 +366,8 @@ The following tools and libraries were utilized to develop, test, and deploy the
 	- Markdown for README.md and documentation.
 	- [Draw.io](https://app.diagrams.net/ "Draw.io") for generating UML diagrams.
 
-### 6.2 Deployment Instructions
-#### 6.2.1 Server Deployment
+### 6.3 Deployment Instructions
+#### 6.3.1 Server Deployment
 To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow these steps:
 1. Launch EC2 Instance:
 	- Log in to AWS Academy and access the EC2 dashboard. 
@@ -400,7 +400,7 @@ To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow 
      ```
 5. Verify Deployment:
 	- Confirm the server is running by checking the console output or log file.
-#### 6.2.2 Client Execution
+#### 6.3.2 Client Execution
 
 To run the C++ client locally, follow these steps:
 
@@ -439,7 +439,45 @@ This project includes comprehensive automated testing using Google Test. The tes
 ##### Sample test cases:
 - `RegisterPlayer_Player1_Success`
 - `PlaceShips_TooFewShips_Throws`
-- `ProcessShot_GameOver_Throws`
+- `ProcessShot_ChangesTurn`
+
+```bash
+./game_logic_test
+[==========] Running 13 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 13 tests from GameLogicTest
+[ RUN      ] GameLogicTest.RegisterPlayer_Player1_Success
+[       OK ] GameLogicTest.RegisterPlayer_Player1_Success (0 ms)
+[ RUN      ] GameLogicTest.RegisterPlayer_Player2_Success
+[       OK ] GameLogicTest.RegisterPlayer_Player2_Success (0 ms)
+[ RUN      ] GameLogicTest.RegisterPlayer_InvalidPlayerId_Throws
+[       OK ] GameLogicTest.RegisterPlayer_InvalidPlayerId_Throws (0 ms)
+[ RUN      ] GameLogicTest.RegisterPlayer_DuplicateRegistration_Throws
+[       OK ] GameLogicTest.RegisterPlayer_DuplicateRegistration_Throws (0 ms)
+[ RUN      ] GameLogicTest.RegisterPlayer_EmptyNickname_AllowsByDefault
+[       OK ] GameLogicTest.RegisterPlayer_EmptyNickname_AllowsByDefault (0 ms)
+[ RUN      ] GameLogicTest.PlaceShips_ValidForPlayer1_Succeeds
+[       OK ] GameLogicTest.PlaceShips_ValidForPlayer1_Succeeds (0 ms)
+[ RUN      ] GameLogicTest.PlaceShips_InvalidPlayerId_Throws
+[       OK ] GameLogicTest.PlaceShips_InvalidPlayerId_Throws (0 ms)
+[ RUN      ] GameLogicTest.PlaceShips_DuplicatePlacement_Throws
+[       OK ] GameLogicTest.PlaceShips_DuplicatePlacement_Throws (0 ms)
+[ RUN      ] GameLogicTest.PlaceShips_PlayersNotRegistered_Throws
+[       OK ] GameLogicTest.PlaceShips_PlayersNotRegistered_Throws (0 ms)
+[ RUN      ] GameLogicTest.PlaceShips_TooFewShips_Throws
+[       OK ] GameLogicTest.PlaceShips_TooFewShips_Throws (0 ms)
+[ RUN      ] GameLogicTest.ProcessShot_ValidHit_Player1_Succeeds
+[       OK ] GameLogicTest.ProcessShot_ValidHit_Player1_Succeeds (0 ms)
+[ RUN      ] GameLogicTest.ProcessShot_ChangesTurn
+[       OK ] GameLogicTest.ProcessShot_ChangesTurn (0 ms)
+[ RUN      ] GameLogicTest.ProcessShot_InvalidCoordinate_Throws
+[       OK ] GameLogicTest.ProcessShot_InvalidCoordinate_Throws (0 ms)
+[----------] 13 tests from GameLogicTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 1 test suite ran. (1 ms total)
+[  PASSED  ] 13 tests.
+```
 
 `phase_state_test.cpp`
 - Validates state transitions in the game phase (registration → placement → playing → finished).
