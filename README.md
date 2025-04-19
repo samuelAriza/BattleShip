@@ -226,19 +226,19 @@ The server utilizes a hybrid threading model with dedicated threads for core ser
 	- Spawns the acceptor and cleanup threads (`acceptor_thread` and `cleanup_thread`).
 	- Joins these threads to wait for their completion, ensuring graceful shutdown.
 - Acceptor Thread (`Server::accept_clients`):
-	- Runs in a loop to accept incoming client connections using `accept()`.
-	- Stores client file descriptors (FDs) in a thread-safe queue (`pending_clients_`).
-	- When two clients are queued, creates a new `GameSession`, assigns the clients as Player 1 and Player 2, and starts the session in a dedicated thread.
+	- Continuously accepts incoming client connections using `accept()`.
+	- Queues client file descriptors (FDs) in a thread-safe queue (`pending_clients_`).
+	- When two clients are queued, creates a `GameSession`, assigns clients as Player 1 and Player 2, and starts the session in a dedicated thread.
+	- Synchronizes access to `pending_clients_ ` with `pending_mutex_`.
 - Cleanup Thread (`Server::cleanup_finished_sessions`):
 	- Periodically scans the `sessions_` map to remove finished game sessions (where `finished_ == true`).
 	- Runs every 1 second to minimize lock contention, using `std::this_thread::sleep_for`.
 	- Synchronizes access to `sessions_` with a mutex (`sessions_mutex_`).
-	- Uses a mutex (`pending_mutex_`) to synchronize access to `pending_clients_.`
 - Session Threads (`GameSession::run_session`):
 	- Each GameSession runs in its own thread (`session_thread_`), started via `GameSession::start`.
 	- Manages the game lifecycle for a pair of players across phases: REGISTRATION, PLACEMENT, PLAYING, and FINISHED.
 	- Handles client communication, processes messages (REGISTER, PLACE_SHIPS, SHOOT, SURRENDER), enforces game rules, and manages the 30-second turn timer.
-	- Terminates when the game ends (via victory, surrender, or disconnection) or when an error occurs, setting finished_ = true.
+	- Terminates when the game ends (via victory, surrender, or disconnection) or when an error occurs, `setting finished_ = true`.
 #### Synchronization Mechanisms
 To ensure thread safety and prevent race conditions, the following synchronization mechanisms are implemented:
 - Mutexes:
@@ -320,13 +320,11 @@ The SURRENDER message is processed in the PLAYING phase:
 - For high loads, a thread pool could be considered, but the current model is sufficient for the project’s scope (multiple pairs of players).
 
 ### 5.3 State Machine Diagram
-This section presents the Finite State Machines (FSMs) for the server and client components of the Battleship game, designed to provide a clear and concise representation of their general operational flow. The main goal is to illustrate the high-level structure and control of the game phases, capturing the logical progression of interactions between the server, clients, and players, as dictated by the designed Battleship game protocol.
+This section presents the Finite State Machines (FSMs) for the server and client components of the Battleship game, designed to provide a clear and concise representation of their overall operational flow. The main objective is to illustrate the high-level structure and control of the game phases, capturing the logical progression of interactions between the server, clients, and players, as defined by the designed Battleship game protocol.
 
-The server FSM describes the lifecycle of a game session, detailing how the server manages player registration, ship placement, gameplay, and game termination. The client FSM complements this by describing the client’s behavior, including user interactions and responses to server messages during the same game phases. Together, these FSMs offer a comprehensive view of the game’s flow, from session initiation to completion, focusing on protocol-driven state transitions and user-driven actions.
+The server FSM describes the lifecycle of a game session, detailing the management of player registration, ship placement, gameplay, and session termination, including the handling of client disconnections. The client FSM complements this information by describing the client’s behavior, including user interactions, responses to server messages, and the end-of-game menu that allows players to start a new game or exit. Together, these FSMs provide a comprehensive view of the game’s flow from start to finish, emphasizing protocol-driven state transitions and user-driven actions.
 
-It is important to note that this is an abstraction of low-level network connection details, such as those involving the socket API (e.g., socket creation, binding, or message transmission). Instead, the emphasis is on the logical flow of game states, the events that trigger state transitions (e.g., protocol messages, user inputs, or timeouts), and the actions taken in response (e.g., sending messages, updating game state, or displaying boards). This approach ensures that the FSMs serve as accessible and focused tools for understanding the core functionality of the Battleship server and client, making them valuable for developers, maintainers, and stakeholders interested in the game’s high-level design.
-
-In this regard, the FSMs for the server and client are presented, each with a detailed description of states, transitions, events/conditions, and associated actions in pseudocode.
+These finite state machines abstract low-level details of the network connection, such as those related to the socket API (e.g., socket creation, binding, or message transmission). Instead, they focus on the logical flow of game states, the events that trigger state transitions (e.g., protocol messages, user inputs, timeouts, or disconnections), and the corresponding actions (e.g., sending messages, updating game state, displaying boards, or presenting menus). This approach ensures that the FSMs remain accessible and focused tools for understanding the core functionality of the Battleship server and client.
 
 #### Server Finite State Machine
 ![FSM Server](assets/FSM-Server.png)
@@ -335,12 +333,278 @@ In this regard, the FSMs for the server and client are presented, each with a de
 ![FSM Server](assets/FSM-Client.png)
 
 
-## 6 Development Environment
+
+## 6 Implementation Details
+### 6.1 Development Environment
+- Operating Systems:
+	- Development:  Kali GNU/Linux Rolling
+	- Deployment: AWS EC2 (Instance for server deployment)
+- Hardware:
+
+| Component  | Specification   |
+| ------------ | ------------ |
+| Laptop Model  | Acer Aspire A315-58  |
+|  Processor | Intel® Core™ i5-1135G7 (11th Gen, 4 cores / 8 threads, up to 4.2 GHz) |
+| Architecture  | 64-bit |
+| RAM  | 8 GB DDR4 (2× 4GB @ 3200 MHz, Dual Channel: SK Hynix + Micron) |
+| Storage  |  512 GB NVMe SSD (WDC PC SN530) |
+| Wireless  |  Intel Wi-Fi 6 AX201 + Bluetooth |
+| Ethernet  | Realtek PCIe Gigabit Ethernet Controller |
+| OS |  Linux (kernel 6.12.20-amd64 |
+
 ### 6.1 Tools and Libraries Used
-### 6.2 Language-Specific Notes
-### 6.3 Deployment Instructions
-#### 6.3.1 Server Deployment
-#### 6.3.2 Client Execution
+The following tools and libraries were utilized to develop, test, and deploy the Battleship game:
+- Compilers:
+	- g++ (Debian 14.2.0-19) 14.2.0
+- Build Tools:
+	- Make (for automating compilation of server and client executables).
+- Version Control:
+	- git version 2.47.2
+- Testing and Debugging:
+	- Google Test was used for writing and running unit tests across the following core modules: game logic, protocol and phase state).
+- Documentation Tools:
+	- Markdown for README.md and documentation.
+	- [Draw.io](https://app.diagrams.net/ "Draw.io") for generating UML diagrams.
+
+### 6.2 Deployment Instructions
+#### 6.2.1 Server Deployment
+To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow these steps:
+1. Launch EC2 Instance:
+	- Log in to AWS Academy and access the EC2 dashboard. 
+	- Launch a t2.micro instance with Amazon Linux 2 AMI.
+	- Configure the security group to allow TCP traffic on port 8080 (or your chosen port).
+2. Install Dependencies:
+	- Connect to the instance via SSH.
+	- Update the system and install GCC for C++:
+      ```bash
+      sudo yum update -y
+      sudo yum install -y gcc-c++ make
+      ```
+3. Transfer Server Code:
+	- Use SCP to transfer the server source code and Makefile to the EC2 instance:
+      ```bash
+      scp -i <your-key.pem> server.cpp Makefile ec2-user@<ec2-public-ip>:/home/ec2-user/
+      ```
+4. Compile and Run:
+
+   - Compile the server code using the Makefile:
+
+     ```bash
+     make
+     ```
+
+   - Run the server, specifying the IP, port, and log file:
+
+     ```bash
+     ./server 0.0.0.0 8080 /home/ec2-user/log.log
+     ```
+5. Verify Deployment:
+	- Confirm the server is running by checking the console output or log file.
+#### 6.2.2 Client Execution
+
+To run the C++ client locally, follow these steps:
+
+1. Set Up Environment:  
+   - Ensure `g++` (Debian 14.2.0-19) 14.2.0 or compatible is installed on the local machine.
+
+2. Compile the Client:  
+   - Compile the client code using a provided Makefile or directly:
+
+     ```bash
+     g++ -o client client.cpp -std=c++17
+     ```
+3. Run the Client:
+   - Execute the client, specifying the path log:
+
+     ```bash
+     ./bsclient </path/log.log>
+     ```
+
 
 ## 7 Testing and Validation
+This project includes comprehensive automated testing using Google Test. The tests are divided into unit, integration, and system-level checks to ensure full coverage of the core components.
+### Test Plan
+| Test Level  | Description  |
+| ------------ | ------------ |
+| Unit Test  |Validate isolated components like `GameLogic`, `Protocol`, and `PhaseState`. |
+|  Integration | Ensure communication between game states, message parsing, and transitions. |
+|  System Tests	 | Simulate complete game flows, including player registration and shooting. |
+
+#### Unit Test
+`game_logic_test.cpp`
+- Tests the core mechanics of player registration, ship placement, and turn-based gameplay.
+- Ensures exception handling when registering invalid players or placing incorrect ships.
+- Validates win conditions and game over behavior.
+
+##### Sample test cases:
+- `RegisterPlayer_Player1_Success`
+- `PlaceShips_TooFewShips_Throws`
+- `ProcessShot_GameOver_Throws`
+
+`phase_state_test.cpp`
+- Validates state transitions in the game phase (registration → placement → playing → finished).
+- Ensures illegal transitions throw appropriate exceptions.
+
+##### Sample test cases:
+- `TransitionFromRegistrationToPlacement`
+- `InvalidTransitionFromPlacementToFinished`
+- `FullTransitionCycle`
+
+```bash
+./phase_state_test  
+[==========] Running 7 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 7 tests from PhaseStateTest
+[ RUN      ] PhaseStateTest.TransitionFromRegistrationToPlacement
+[       OK ] PhaseStateTest.TransitionFromRegistrationToPlacement (0 ms)
+[ RUN      ] PhaseStateTest.InvalidTransitionFromRegistrationToPlaying
+[       OK ] PhaseStateTest.InvalidTransitionFromRegistrationToPlaying (0 ms)
+[ RUN      ] PhaseStateTest.TransitionFromPlacementToPlaying
+[       OK ] PhaseStateTest.TransitionFromPlacementToPlaying (0 ms)
+[ RUN      ] PhaseStateTest.InvalidTransitionFromPlacementToFinished
+[       OK ] PhaseStateTest.InvalidTransitionFromPlacementToFinished (0 ms)
+[ RUN      ] PhaseStateTest.TransitionFromPlayingToFinished
+[       OK ] PhaseStateTest.TransitionFromPlayingToFinished (0 ms)
+[ RUN      ] PhaseStateTest.FullTransitionCycle
+[       OK ] PhaseStateTest.FullTransitionCycle (0 ms)
+[ RUN      ] PhaseStateTest.InvalidMultipleTransitionsToSamePhase
+[       OK ] PhaseStateTest.InvalidMultipleTransitionsToSamePhase (0 ms)
+[----------] 7 tests from PhaseStateTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 7 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 7 tests.
+```
+
+`protocol_test.cpp`
+- Exhaustively tests the `Protocol` class's ability to parse and build messages.
+- Covers valid/invalid cases for REGISTER, PLACE_SHIPS, SHOOT, SURRENDER, STATUS, GAME_OVER, and ERROR.
+
+##### Sample test cases:
+- `ParseMessage_RegisterData_ParsesCorrectly`
+- `ParseMessage_Shoot_InvalidFormat_NumberFirst`
+- `BuildMessage_GameOver`
+
+```bash
+./protocol_test             
+[==========] Running 51 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 51 tests from ProtocolTest
+[ RUN      ] ProtocolTest.ParseMessage_PlayerIdData
+[       OK ] ProtocolTest.ParseMessage_PlayerIdData (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_RegisterData_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_RegisterData_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_MissingCommaThrows
+[       OK ] ProtocolTest.ParseMessage_Register_MissingCommaThrows (10 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_EmptyNicknameThrows
+[       OK ] ProtocolTest.ParseMessage_Register_EmptyNicknameThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_EmptyEmailThrows
+[       OK ] ProtocolTest.ParseMessage_Register_EmptyEmailThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_EmptyDataThrows
+[       OK ] ProtocolTest.ParseMessage_Register_EmptyDataThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_MissingBothFieldsThrows
+[       OK ] ProtocolTest.ParseMessage_Register_MissingBothFieldsThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Register_MissingDelimiterThrows
+[       OK ] ProtocolTest.ParseMessage_Register_MissingDelimiterThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_InvalidFormat_NoColon
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_InvalidFormat_NoColon (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_InvalidFormat_NoComma
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_InvalidFormat_NoComma (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_EmptyData
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_EmptyData (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_InvalidShipType
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_InvalidShipType (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_InvalidCoordinate
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_InvalidCoordinate (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_DuplicateShipTypesAllowed
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_DuplicateShipTypesAllowed (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_ValidCoordinates
+[       OK ] ProtocolTest.ParseMessage_Shoot_ValidCoordinates (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_EmptyMessageThrows
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_EmptyMessageThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_MissingDataThrows
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_MissingDataThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_PlaceShips_SingleShip
+[       OK ] ProtocolTest.ParseMessage_PlaceShips_SingleShip (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_EmptyCoordinate
+[       OK ] ProtocolTest.ParseMessage_Shoot_EmptyCoordinate (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_MissingDelimiter
+[       OK ] ProtocolTest.ParseMessage_Shoot_MissingDelimiter (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_InvalidFormat_NumberFirst
+[       OK ] ProtocolTest.ParseMessage_Shoot_InvalidFormat_NumberFirst (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_IncompleteCoordinate_OnlyLetter
+[       OK ] ProtocolTest.ParseMessage_Shoot_IncompleteCoordinate_OnlyLetter (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_IncompleteCoordinate_OnlyNumber
+[       OK ] ProtocolTest.ParseMessage_Shoot_IncompleteCoordinate_OnlyNumber (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Shoot_InvalidCoordinateSymbols
+[       OK ] ProtocolTest.ParseMessage_Shoot_InvalidCoordinateSymbols (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Surrender
+[       OK ] ProtocolTest.ParseMessage_Surrender (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Status_LongMessage_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_Status_LongMessage_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Status_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_Status_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Status_OpponentTurn
+[       OK ] ProtocolTest.ParseMessage_Status_OpponentTurn (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_StatusWithEmptyBoards_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_StatusWithEmptyBoards_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Status_MultipleCells
+[       OK ] ProtocolTest.ParseMessage_Status_MultipleCells (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Status_InvalidFormat
+[       OK ] ProtocolTest.ParseMessage_Status_InvalidFormat (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithStandardName
+[       OK ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithStandardName (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithNameContainingSpaces
+[       OK ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithNameContainingSpaces (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ParsesWinnerWithSpecialChars
+[       OK ] ProtocolTest.ParseMessage_GameOver_ParsesWinnerWithSpecialChars (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithEmptyWinner
+[       OK ] ProtocolTest.ParseMessage_GameOver_ParsesCorrectlyWithEmptyWinner (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ThrowsOnMissingPipeSeparator
+[       OK ] ProtocolTest.ParseMessage_GameOver_ThrowsOnMissingPipeSeparator (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_GameOver_ThrowsOnExtraData
+[       OK ] ProtocolTest.ParseMessage_GameOver_ThrowsOnExtraData (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_ParsesCorrectly
+[       OK ] ProtocolTest.ParseMessage_Error_ParsesCorrectly (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_NonNumericCodeThrows
+[       OK ] ProtocolTest.ParseMessage_Error_NonNumericCodeThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_MissingCommaThrows
+[       OK ] ProtocolTest.ParseMessage_Error_MissingCommaThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_EmptyDescriptionThrows
+[       OK ] ProtocolTest.ParseMessage_Error_EmptyDescriptionThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_EmptyCodeThrows
+[       OK ] ProtocolTest.ParseMessage_Error_EmptyCodeThrows (0 ms)
+[ RUN      ] ProtocolTest.ParseMessage_Error_EmptyDataThrows
+[       OK ] ProtocolTest.ParseMessage_Error_EmptyDataThrows (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_Register_ReturnsCorrectFormat
+[       OK ] ProtocolTest.BuildMessage_Register_ReturnsCorrectFormat (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_PlaceShips
+[       OK ] ProtocolTest.BuildMessage_PlaceShips (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_Shoot
+[       OK ] ProtocolTest.BuildMessage_Shoot (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_Status
+[       OK ] ProtocolTest.BuildMessage_Status (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_Surrender
+[       OK ] ProtocolTest.BuildMessage_Surrender (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_GameOver
+[       OK ] ProtocolTest.BuildMessage_GameOver (0 ms)
+[ RUN      ] ProtocolTest.BuildMessage_Error
+[       OK ] ProtocolTest.BuildMessage_Error (0 ms)
+[----------] 51 tests from ProtocolTest (11 ms total)
+
+[----------] Global test environment tear-down
+[==========] 51 tests from 1 test suite ran. (11 ms total)
+[  PASSED  ] 51 tests.
+```
+
+### Integration Test:
+- Implicitly covered by combining message parsing (protocol) with game_logic in the Server.
+- Validates if parsed inputs (e.g., PLACE_SHIPS) are interpreted correctly during gameplay.
+- Validation: Message parsing and in-game execution behave consistently.\
+
+### System Tests
+Result
+
 ## 8 Conclusion
