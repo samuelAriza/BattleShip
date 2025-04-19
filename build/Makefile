@@ -153,17 +153,17 @@ game_logic/fast:
 .PHONY : game_logic/fast
 
 #=============================================================================
-# Target rules for targets named battleship_server
+# Target rules for targets named server
 
 # Build rule for target.
-battleship_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 battleship_server
-.PHONY : battleship_server
+server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 server
+.PHONY : server
 
 # fast build rule for target.
-battleship_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/build
-.PHONY : battleship_server/fast
+server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/build
+.PHONY : server/fast
 
 #=============================================================================
 # Target rules for targets named bsclient
@@ -414,7 +414,7 @@ server/src/main.o: server/src/main.cpp.o
 
 # target to build an object file
 server/src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/main.cpp.o
 .PHONY : server/src/main.cpp.o
 
 server/src/main.i: server/src/main.cpp.i
@@ -422,7 +422,7 @@ server/src/main.i: server/src/main.cpp.i
 
 # target to preprocess a source file
 server/src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/main.cpp.i
 .PHONY : server/src/main.cpp.i
 
 server/src/main.s: server/src/main.cpp.s
@@ -430,7 +430,7 @@ server/src/main.s: server/src/main.cpp.s
 
 # target to generate assembly for a file
 server/src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/main.cpp.s
 .PHONY : server/src/main.cpp.s
 
 server/src/server.o: server/src/server.cpp.o
@@ -438,7 +438,7 @@ server/src/server.o: server/src/server.cpp.o
 
 # target to build an object file
 server/src/server.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/server.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/server.cpp.o
 .PHONY : server/src/server.cpp.o
 
 server/src/server.i: server/src/server.cpp.i
@@ -446,7 +446,7 @@ server/src/server.i: server/src/server.cpp.i
 
 # target to preprocess a source file
 server/src/server.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/server.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/server.cpp.i
 .PHONY : server/src/server.cpp.i
 
 server/src/server.s: server/src/server.cpp.s
@@ -454,7 +454,7 @@ server/src/server.s: server/src/server.cpp.s
 
 # target to generate assembly for a file
 server/src/server.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/battleship_server.dir/build.make CMakeFiles/battleship_server.dir/server/src/server.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server/src/server.cpp.s
 .PHONY : server/src/server.cpp.s
 
 # Help Target
@@ -466,13 +466,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... test"
-	@echo "... battleship_server"
 	@echo "... bsclient"
 	@echo "... game_logic"
 	@echo "... game_logic_test"
 	@echo "... phase_state_test"
 	@echo "... protocol"
 	@echo "... protocol_test"
+	@echo "... server"
 	@echo "... client/src/client.o"
 	@echo "... client/src/client.i"
 	@echo "... client/src/client.s"

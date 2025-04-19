@@ -24,12 +24,12 @@ target_include_directories(game_logic PUBLIC protocol/include)
 target_link_libraries(game_logic protocol)
 
 # Añadir ejecutable del servidor
-add_executable(battleship_server
+add_executable(server
     server/src/server.cpp
     server/src/main.cpp
 )
-target_include_directories(battleship_server PRIVATE server/include protocol/include)
-target_link_libraries(battleship_server protocol game_logic)
+target_include_directories(server PRIVATE server/include protocol/include)
+target_link_libraries(server protocol game_logic)
 
 # Añadir ejecutable del cliente
 add_executable(bsclient

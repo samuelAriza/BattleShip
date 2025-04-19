@@ -63,7 +63,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/protocol.dir/DependInfo.cmake"
   "CMakeFiles/game_logic.dir/DependInfo.cmake"
-  "CMakeFiles/battleship_server.dir/DependInfo.cmake"
+  "CMakeFiles/server.dir/DependInfo.cmake"
   "CMakeFiles/bsclient.dir/DependInfo.cmake"
   "CMakeFiles/protocol_test.dir/DependInfo.cmake"
   "CMakeFiles/game_logic_test.dir/DependInfo.cmake"
