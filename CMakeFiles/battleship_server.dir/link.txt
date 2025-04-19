@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/battleship_server.dir/server/src/server.cpp.o CMakeFiles/battleship_server.dir/server/src/main.cpp.o -o battleship_server  libprotocol.a libgame_logic.a libprotocol.a

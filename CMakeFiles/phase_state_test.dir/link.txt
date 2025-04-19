@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/phase_state_test.dir/protocol/test/phase_state_test.cpp.o -o phase_state_test  libprotocol.a /usr/lib/x86_64-linux-gnu/libgtest.a -lpthread
