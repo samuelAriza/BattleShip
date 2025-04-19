@@ -223,4 +223,5 @@ CMakeFiles/bsclient.dir/client/src/main.cpp.o: \
  /usr/include/c++/14/bits/locale_conv.h /usr/include/c++/14/iomanip \
  /usr/include/c++/14/bits/quoted_string.h /usr/include/c++/14/sstream \
  /usr/include/c++/14/bits/sstream.tcc /usr/include/c++/14/codecvt \
- /usr/include/c++/14/bits/fs_dir.h /usr/include/c++/14/bits/fs_ops.h
+ /usr/include/c++/14/bits/fs_dir.h /usr/include/c++/14/bits/fs_ops.h \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/include/../../include/dotenv.h

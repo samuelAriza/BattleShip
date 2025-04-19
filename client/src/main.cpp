@@ -2,9 +2,16 @@
 #include <iostream>
 #include <cstdlib>
 #include <filesystem>
+#include <../../include/dotenv.h>
+
+std::string get_env(const std::string& key, const std::string& fallback) {
+    const char* val = std::getenv(key.c_str());
+    return val ? val : fallback;
+}
 
 int main(int argc, char *argv[])
 {
+    dotenv::init();
     if (argc != 2)
     {
         std::cerr << "Usage: ./bsclient </path/to/log.log>\n";
@@ -38,8 +45,8 @@ int main(int argc, char *argv[])
     std::cout << "Enter your email: ";
     std::getline(std::cin, email);
 
-    const std::string server_ip = "127.0.0.1";
-    const int server_port = 8080;
+    const std::string server_ip = get_env("SERVER_IP", "127.0.0.1");
+    const int server_port = std::stoi(get_env("SERVER_PORT", "8080"));
     while (true)
     {
         try

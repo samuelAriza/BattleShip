@@ -332,6 +332,7 @@ CMakeFiles/bsclient.dir/client/src/main.cpp.o
  /home/samargo/Documents/universidad/telematica/BattleShip/client/src/main.cpp
  /home/samargo/Documents/universidad/telematica/BattleShip/protocol/include/protocol.hpp
  /home/samargo/Documents/universidad/telematica/BattleShip/client/include/client.hpp
+ /home/samargo/Documents/universidad/telematica/BattleShip/include/dotenv.h
  /usr/include/alloca.h
  /usr/include/asm-generic/bitsperlong.h
  /usr/include/asm-generic/errno-base.h
