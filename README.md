@@ -371,25 +371,31 @@ The following tools and libraries were utilized to develop, test, and deploy the
 To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow these steps:
 1. Launch EC2 Instance:
 	- Log in to AWS Academy and access the EC2 dashboard. 
-	- Launch a t2.micro instance with Amazon Linux 2 AMI.
-	- Configure the security group to allow TCP traffic on port 8080 (or your chosen port).
+	- Launch a t2.micro instance with xxx.
+	- Configure the security group to allow TCP traffic on port 8080.
 2. Install Dependencies:
 	- Connect to the instance via SSH.
 	- Update the system and install GCC for C++:
       ```bash
-      sudo yum update -y
-      sudo yum install -y gcc-c++ make
+      sudo apt update -y
+      sudo apt install -y gcc-c++ make git
       ```
-3. Transfer Server Code:
-	- Use SCP to transfer the server source code and Makefile to the EC2 instance:
+3. Clone the repository:
       ```bash
-      scp -i <your-key.pem> server.cpp Makefile ec2-user@<ec2-public-ip>:/home/ec2-user/
+      git clone git@github.com:user/Repo.git
       ```
 4. Compile and Run:
 
-   - Compile the server code using the Makefile:
+   - Go to the following path:
 
      ```bash
+     cd BattleShip/build
+     ```
+
+   - Execute the following commands:
+
+     ```bash
+     cmake ..
      make
      ```
 
