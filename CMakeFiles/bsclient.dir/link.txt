@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/bsclient.dir/client/src/client.cpp.o CMakeFiles/bsclient.dir/client/src/main.cpp.o -o bsclient  libprotocol.a

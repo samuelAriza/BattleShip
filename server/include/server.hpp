@@ -17,7 +17,8 @@
 
 namespace BattleshipServer
 {
-
+    // Declaración forward de Server
+    class Server;
     /**
      * @class ServerError
      * @brief Exception class for server-related errors.
@@ -43,7 +44,7 @@ namespace BattleshipServer
          * @brief Constructs a new GameSession with a unique session ID.
          * @param session_id Unique identifier for the session.
          */
-        explicit GameSession(int session_id);
+        explicit GameSession(int session_id, Server* server);
 
         /**
          * @brief Destructor. Ensures the session thread is joined.
@@ -98,7 +99,12 @@ namespace BattleshipServer
          */
         int get_client_fd(int player_id) const;
 
+
+        //
+        //int release_client_fd(int player_id);
+            //
     private:
+        Server* server_; // Pointer to parent Server
         int session_id_;                                                                                                 ///< Unique ID for the session.
         std::map<int, std::pair<int, std::string>> players_;                                                             ///< Map of player ID to (socket, IP).
         std::unique_ptr<BattleShipProtocol::GameLogic> game_;                                                            ///< Game logic handler.
@@ -127,7 +133,7 @@ namespace BattleshipServer
          * @param msg Message object to be sent.
          * @param protocol Reference to the protocol handler used for serialization.
          */
-        void send_message(int client_fd, const BattleShipProtocol::Message &msg,
+        bool send_message(int client_fd, const BattleShipProtocol::Message &msg,
                           const BattleShipProtocol::Protocol &protocol) const;
 
         /**
@@ -162,8 +168,12 @@ namespace BattleshipServer
          * @brief Starts the server's main loop.
          */
         void run();
-
+        void requeue_client(int client_fd, const std::string &client_ip);
     private:
+    //  PARA MANEJAR EL REEMPAREJAMIENTO
+        
+        //void requeue_client(int client_fd, const std::string &client_ip);
+    // REEMPAREJAMIENTO 
         int server_fd_;                                        ///< Server socket file descriptor.
         struct sockaddr_in address_;                           ///< Socket address structure.
         std::string ip_;                                       ///< Server IP address.
