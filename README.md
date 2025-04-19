@@ -357,7 +357,7 @@ The following tools and libraries were utilized to develop, test, and deploy the
 - Compilers:
 	- g++ (Debian 14.2.0-19) 14.2.0
 - Build Tools:
-	- Make (for automating compilation of server and client executables).
+	- cmake version 3.31.6 and GNU Make 4.4.1 (for automating compilation of server and client executables).
 - Version Control:
 	- git version 2.47.2
 - Testing and Debugging:
