@@ -1,1 +1,5 @@
 googletest
+client/include/clienttest.hpp
+client/src/clienttest.cpp
+server/include/servertest.hpp
+server/src/servertest.cpp

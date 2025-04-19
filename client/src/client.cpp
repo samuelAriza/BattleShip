@@ -46,13 +46,16 @@ namespace BattleshipClient
     void Client::run()
     {
         connect_to_server();
-        running_ = true;
+        reset_state();
 
         send_thread_ = std::thread(&Client::send_loop, this);
         recv_thread_ = std::thread(&Client::receive_loop, this);
 
         send_thread_.join();
         recv_thread_.join();
+
+        close(client_fd_);
+        client_fd_ = -1;
     }
 
     void Client::connect_to_server()
@@ -70,190 +73,246 @@ namespace BattleshipClient
         log("Connected to server", server_ip_ + ":" + std::to_string(server_port_));
     }
 
+    void Client::reset_state()
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        shot_history_.clear();
+        last_status_ = BattleShipProtocol::StatusData{};
+        player_id_ = -1;
+        running_ = true;
+    }
+
     void Client::send_loop()
     {
-        // Esperar el mensaje PLAYER_ID
-        {
-            std::unique_lock<std::mutex> lock(player_id_mutex_);
-            player_id_cv_.wait(lock, [this]
-                               { return player_id_ != -1 || !running_; });
-            if (!running_)
-                return;
-        }
-
-        // Fase de Registro
-        try
-        {
-            std::cout << "[DEBUG] Enviando REGISTER para nickname: " << nickname_ << std::endl;
-            BattleShipProtocol::Message register_msg{
-                BattleShipProtocol::MessageType::REGISTER,
-                BattleShipProtocol::RegisterData{nickname_, email_}};
-            send_message(register_msg);
-            log(protocol_.build_message(register_msg), "Sent registration", "INFO");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "[ERROR] REGISTER failed: " << e.what() << std::endl;
-            log("REGISTER failed", e.what(), "ERROR");
-            running_ = false;
-            return;
-        }
-
-        // Fase de Colocación
-        {
-            std::unique_lock<std::mutex> lock(state_mutex_);
-            while (running_ && last_status_.gameState == BattleShipProtocol::GameState::WAITING)
+        //while (true)
+        //{
+            // Esperar el mensaje PLAYER_ID
             {
-                lock.unlock();
-                std::cout << "[DEBUG] Esperando para entrar en fase PLACEMENT..." << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                lock.lock();
-            }
-            if (!running_)
-                return;
-        }
-        std::cout << "Fase de colocación de barcos.\n";
-        std::cout << "¿Deseas colocar los barcos manualmente o de forma aleatoria?\n";
-        std::cout << "Ingresa 'M' para manual o 'R' para aleatorio: ";
-        std::string choice;
-        std::getline(std::cin, choice);
-
-        BattleShipProtocol::PlaceShipsData ships_data;
-        if (choice == "M" || choice == "m")
-        {
-            std::cout << "[DEBUG] Seleccionada colocación manual de barcos.\n";
-            ships_data = generate_manual_ships();
-        }
-        else
-        {
-            std::cout << "[DEBUG] Seleccionada colocación aleatoria de barcos.\n";
-            ships_data = generate_initial_ships();
-        }
-
-        try
-        {
-            std::cout << "[DEBUG] Enviando PLACE_SHIPS\n";
-            BattleShipProtocol::Message place_ships_msg{
-                BattleShipProtocol::MessageType::PLACE_SHIPS,
-                ships_data};
-            send_message(place_ships_msg);
-            log(protocol_.build_message(place_ships_msg), "Sent ship placement", "INFO");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "[ERROR] PLACE_SHIPS failed: " << e.what() << std::endl;
-            log("PLACE_SHIPS failed", e.what(), "ERROR");
-            running_ = false;
-            return;
-        }
-
-        // Fase de Juego
-        while (running_)
-        {
-            std::unique_lock<std::mutex> lock(state_mutex_);
-            if (last_status_.gameState == BattleShipProtocol::GameState::ENDED)
-            {
-                std::cout << "[DEBUG] Game ended, exiting send_loop" << std::endl;
-                running_ = false;
-                break;
-            }
-            if (last_status_.turn == BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
-            {
-                std::cout << "[INFO] Tu turno ha comenzado. Tienes 30 segundos.\n";
-            }
-            if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
-            {
-                std::cout << "[INFO] Turno del oponente. Esperando...\n";
+                std::unique_lock<std::mutex> lock(player_id_mutex_);
+                player_id_cv_.wait(lock, [this]
+                                   { return player_id_ != -1 || !running_; });
+                if (!running_)
+                    return;
             }
 
-            if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN ||
-                last_status_.gameState != BattleShipProtocol::GameState::ONGOING)
-            {
-                lock.unlock();
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                continue;
-            }
-            lock.unlock();
-
-            std::string input;
-            std::cout << "\nEnter your choice: ";
-            std::getline(std::cin, input);
-            if (!running_)
-                break;
-
+            // Fase de Registro
+            bool game_ended = false;
             try
             {
-                if (input.substr(0, 6) == "SHOOT ")
-                {
-                    std::string coord = input.substr(6);
-                    if (coord.length() < 2)
-                    {
-                        std::cout << "[ERROR] Invalid coordinate: too short (e.g., use 'SHOOT A1')" << std::endl;
-                        continue;
-                    }
-                    std::string letter = coord.substr(0, 1);
-                    int number = std::stoi(coord.substr(1));
-                    if (letter < "A" || letter > "J" || number < 1 || number > 10)
-                    {
-                        std::cout << "[ERROR] Invalid coordinate: use A-J and 1-10 (e.g., 'SHOOT A1')" << std::endl;
-                        continue;
-                    }
-                    auto coord_pair = std::make_pair(letter, number);
-                    if (shot_history_.find(coord_pair) != shot_history_.end())
-                    {
-                        std::cout << "[ERROR] You already shot at " << letter << number << ". Select another coordinate.\n";
-                        continue;
-                    }
-                    shot_history_.insert(coord_pair);
-
-                    std::cout << "[DEBUG] Sending SHOOT to coordinate: " << letter << number << std::endl;
-                    BattleShipProtocol::Message shoot_msg{
-                        BattleShipProtocol::MessageType::SHOOT,
-                        BattleShipProtocol::ShootData{BattleShipProtocol::Coordinate{letter, number}}};
-                    send_message(shoot_msg);
-                    log(protocol_.build_message(shoot_msg), "Sent shot", "INFO");
-                }
-                else if (input == "SURRENDER" || input == "4")
-                {
-                    std::cout << "[DEBUG] Sending SURRENDER\n";
-                    BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
-                    send_message(surrender_msg);
-                    log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
-                    running_ = false;
-                    break;
-                }
-                else if (input == "2")
-                {
-                    display_shot_history();
-                }
-                else if (input == "3" || input == "QUIT" || input == "quit")
-                {
-                    std::cout << "Quitting game...\n";
-                    running_ = false;
-                    break;
-                }
-                else
-                {
-                    std::cout << "[ERROR] Invalid input. Use:\n";
-                    std::cout << "  1. 'SHOOT <letter><number>' to shoot\n";
-                    std::cout << "  2 to view shot history\n";
-                    std::cout << "  3 or 'QUIT' to exit\n";
-                    std::cout << "  4 or 'SURRENDER' to surrender\n";
-                }
+                std::cout << "[DEBUG] Enviando REGISTER para nickname: " << nickname_ << std::endl;
+                BattleShipProtocol::Message register_msg{
+                    BattleShipProtocol::MessageType::REGISTER,
+                    BattleShipProtocol::RegisterData{nickname_, email_}};
+                send_message(register_msg);
+                log(protocol_.build_message(register_msg), "Sent registration", "INFO");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             catch (const std::exception &e)
             {
-                std::cerr << "[ERROR] Invalid input format: " << e.what() << std::endl;
-                log(input, "Invalid input format: " + std::string(e.what()), "ERROR");
+                std::cerr << "[ERROR] REGISTER failed: " << e.what() << std::endl;
+                log("REGISTER failed", e.what(), "ERROR");
+                running_ = false;
+                game_ended = true;
             }
-        }
+
+            // Fase de Colocación
+            if (running_ && !game_ended)
+            {
+                std::unique_lock<std::mutex> lock(state_mutex_);
+                while (running_ && last_status_.gameState == BattleShipProtocol::GameState::WAITING)
+                {
+                    lock.unlock();
+                    std::cout << "[DEBUG] Esperando para entrar en fase PLACEMENT..." << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    lock.lock();
+                }
+                if (!running_)
+                    game_ended = true;
+            }
+
+            if (running_ && !game_ended)
+            {
+                std::cout << "Fase de colocación de barcos.\n";
+                std::cout << "¿Deseas colocar los barcos manualmente o de forma aleatoria?\n";
+                std::cout << "Ingresa 'M' para manual o 'R' para aleatorio: ";
+                std::string choice;
+                std::getline(std::cin, choice);
+
+                BattleShipProtocol::PlaceShipsData ships_data;
+                if (choice == "M" || choice == "m")
+                {
+                    std::cout << "[DEBUG] Seleccionada colocación manual de barcos.\n";
+                    ships_data = generate_manual_ships();
+                }
+                else
+                {
+                    std::cout << "[DEBUG] Seleccionada colocación aleatoria de barcos.\n";
+                    ships_data = generate_initial_ships();
+                }
+
+                try
+                {
+                    std::cout << "[DEBUG] Enviando PLACE_SHIPS\n";
+                    BattleShipProtocol::Message place_ships_msg{
+                        BattleShipProtocol::MessageType::PLACE_SHIPS,
+                        ships_data};
+                    send_message(place_ships_msg);
+                    log(protocol_.build_message(place_ships_msg), "Sent ship placement", "INFO");
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "[ERROR] PLACE_SHIPS failed: " << e.what() << std::endl;
+                    log("PLACE_SHIPS failed", e.what(), "ERROR");
+                    running_ = false;
+                    game_ended = true;
+                }
+            }
+
+            // Fase de Juego
+            while (running_ && !game_ended)
+            {
+                std::unique_lock<std::mutex> lock(state_mutex_);
+                if (last_status_.gameState == BattleShipProtocol::GameState::ENDED || !running_)
+                {
+                    game_ended = true;
+                    break;
+                }
+                if (last_status_.turn == BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
+                {
+                    std::cout << "[INFO] Tu turno ha comenzado. Tienes 30 segundos.\n";
+                }
+                if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
+                {
+                    std::cout << "[INFO] Turno del oponente. Esperando...\n";
+                }
+
+                if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN ||
+                    last_status_.gameState != BattleShipProtocol::GameState::ONGOING)
+                {
+                    lock.unlock();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    continue;
+                }
+                lock.unlock();
+
+                std::string input;
+                std::cout << "\nIngresa tu elección: ";
+                std::getline(std::cin, input);
+                if (!running_)
+                {
+                    game_ended = true;
+                    break;
+                }
+
+                try
+                {
+                    if (input.substr(0, 6) == "SHOOT ")
+                    {
+                        std::string coord = input.substr(6);
+                        if (coord.length() < 2)
+                        {
+                            std::cout << "[ERROR] Coordenada inválida: demasiado corta (ej. usa 'SHOOT A1')" << std::endl;
+                            continue;
+                        }
+                        std::string letter = coord.substr(0, 1);
+                        int number = std::stoi(coord.substr(1));
+                        if (letter < "A" || letter > "J" || number < 1 || number > 10)
+                        {
+                            std::cout << "[ERROR] Coordenada inválida: usa A-J y 1-10 (ej. 'SHOOT A1')" << std::endl;
+                            continue;
+                        }
+                        auto coord_pair = std::make_pair(letter, number);
+                        if (shot_history_.find(coord_pair) != shot_history_.end())
+                        {
+                            std::cout << "[ERROR] Ya disparaste en " << letter << number << ". Selecciona otra coordenada.\n";
+                            continue;
+                        }
+                        shot_history_.insert(coord_pair);
+
+                        std::cout << "[DEBUG] Enviando SHOOT a coordenada: " << letter << number << std::endl;
+                        BattleShipProtocol::Message shoot_msg{
+                            BattleShipProtocol::MessageType::SHOOT,
+                            BattleShipProtocol::ShootData{BattleShipProtocol::Coordinate{letter, number}}};
+                        send_message(shoot_msg);
+                        log(protocol_.build_message(shoot_msg), "Sent shot", "INFO");
+                    }
+                    else if (input == "SURRENDER" || input == "4")
+                    {
+                        std::cout << "[DEBUG] Enviando SURRENDER\n";
+                        BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
+                        send_message(surrender_msg);
+                        log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
+                        running_ = false;
+                        game_ended = true;
+                        break;
+                    }
+                    else if (input == "2")
+                    {
+                        display_shot_history();
+                    }
+                    else if (input == "3" || input == "QUIT" || input == "quit")
+                    {
+                        std::cout << "Saliendo del juego...\n";
+                        running_ = false;
+                        return;
+                    }
+                    else
+                    {
+                        std::cout << "[ERROR] Entrada inválida. Usa:\n";
+                        std::cout << "  1. 'SHOOT <letra><número>' para disparar\n";
+                        std::cout << "  2 para ver historial de disparos\n";
+                        std::cout << "  3 o 'QUIT' para salir\n";
+                        std::cout << "  4 o 'SURRENDER' para rendirse\n";
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "[ERROR] Formato de entrada inválido: " << e.what() << std::endl;
+                    log(input, "Formato de entrada inválido: " + std::string(e.what()), "ERROR");
+                }
+            }
+
+            // Menú de fin de juego
+            if (game_ended || !running_)
+            {
+                bool valid_choice = false;
+                while (!valid_choice)
+                {
+                    std::cout << "\nEl juego ha terminado.\n";
+                    std::cout << "Opciones:\n";
+                    std::cout << "  5. Nuevo juego\n";
+                    std::cout << "  3. Salir\n";
+                    std::cout << "Ingresa tu elección: ";
+                    std::string input;
+                    std::getline(std::cin, input);
+
+                    if (input == "5")
+                    {
+                        //reset_state();
+                        std::cout << "[INFO] Iniciando un nuevo juego...\n";
+                        valid_choice = true;
+                        return; // Vuelve al inicio del bucle para un nuevo juego
+                    }
+                    else if (input == "3" || input == "QUIT" || input == "quit")
+                    {
+                        std::cout << "Saliendo del juego...\n";
+                        running_ = false;
+                        valid_choice = true;
+                        return;
+                    }
+                    else
+                    {
+                        std::cout << "[ERROR] Opción inválida. Usa '5' para nuevo juego o '3' para salir.\n";
+                    }
+                }
+            }
+        //}
     }
 
     void Client::receive_loop()
     {
-        while (running_)
+        while (true)
         {
             try
             {
@@ -321,9 +380,11 @@ namespace BattleshipClient
                         std::cerr << "Error: " << error_msg << std::endl;
                         std::cerr << "Por favor ingresa coordenadas válidas (A-J, 1-10)." << std::endl;
                     }
-                    else if (error_msg.find("Client disconnected") != std::string::npos)
+                    else if (error_msg.find("Client disconnected") != std::string::npos ||
+                             error_msg.find("Opponent disconnected") != std::string::npos)
                     {
-                        std::cerr << "Error: El servidor reporta que el cliente está desconectado." << std::endl;
+                        std::cerr << "Error: " << error_msg << std::endl;
+                        std::cerr << "El oponente se ha desconectado. El juego ha terminado." << std::endl;
                         running_ = false;
                     }
                     else
@@ -334,8 +395,8 @@ namespace BattleshipClient
                             error_msg.find("Server disconnected") != std::string::npos ||
                             error_msg.find("Time limit exceeded") != std::string::npos)
                         {
+                            std::cerr << "Error fatal. El juego ha terminado." << std::endl;
                             running_ = false;
-                            std::cerr << "Error fatal. Saliendo del juego." << std::endl;
                         }
                         else
                         {
@@ -350,6 +411,7 @@ namespace BattleshipClient
             }
             catch (const std::exception &e)
             {
+                std::cerr << "[ERROR] Error de recepción: " << e.what() << std::endl;
                 log("Receive failed", e.what(), "ERROR");
                 running_ = false;
                 break;
@@ -761,7 +823,7 @@ namespace BattleshipClient
                 if (!found)
                     std::cout << " ~ |";
             }
-            std::cout << "\n---+---+---+---++++---+---+---+---+---+\n";
+            std::cout << "\n---+---+---+---+---+---+---+---+---+---+---+\n";
         }
 
         std::cout << "\nTablero del Oponente (10x10):\n";
@@ -814,6 +876,10 @@ namespace BattleshipClient
         }
         std::cout << "  2. Ver historial de disparos\n";
         std::cout << "  3. Salir\n";
+        if (last_status_.gameState == BattleShipProtocol::GameState::ENDED || !running_)
+        {
+            std::cout << "  5. Nuevo juego\n";
+        }
         std::cout << "Ingresa tu elección: ";
 
         log("Finished rendering boards and menu", "Player: " + nickname_, "DEBUG");

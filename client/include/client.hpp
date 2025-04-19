@@ -59,6 +59,11 @@ namespace BattleshipClient
 
     private:
         /**
+         * @brief Resets the client's state for a new game.
+         */
+        void reset_state();
+
+        /**
          * @brief Manually generates ship placements.
          * @return PlaceShipsData with manually assigned ships.
          */

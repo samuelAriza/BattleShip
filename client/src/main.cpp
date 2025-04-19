@@ -7,13 +7,13 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        std::cerr << "Uso correcto: ./bsclient </ruta/log.log>\n";
+        std::cerr << "Usage: ./bsclient </path/to/log.log>\n";
         return 1;
     }
 
     std::string log_path = argv[1];
 
-    // Crear carpetas si no existen
+    // Create directories if they do not exist
     try
     {
         std::filesystem::path log_dir = std::filesystem::path(log_path).parent_path();
@@ -24,33 +24,44 @@ int main(int argc, char *argv[])
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error creando directorios para el log: " << e.what() << "\n";
+        std::cerr << "Error creating directories for log file: " << e.what() << "\n";
         return 1;
     }
 
     std::string nickname;
     std::string email;
 
-    std::cout << "=== Bienvenido a Batalla Naval ===\n";
-    std::cout << "Ingresa tu nickname: ";
+    std::cout << "=== Welcome to Battleship ===\n";
+    std::cout << "Enter your nickname: ";
     std::getline(std::cin, nickname);
 
-    std::cout << "Ingresa tu email: ";
+    std::cout << "Enter your email: ";
     std::getline(std::cin, email);
 
     const std::string server_ip = "127.0.0.1";
     const int server_port = 8080;
-
-    try
+    while (true)
     {
-        BattleshipClient::Client client(server_ip, server_port, nickname, email, log_path);
-        client.run();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Cliente falló: " << e.what() << "\n";
-        return 1;
-    }
+        try
+        {
+            BattleshipClient::Client client(server_ip, server_port, nickname, email, log_path);
+            client.run(); // Runs a complete game
 
+            std::string input;
+            std::cout << "\nDo you want to play another game? (Y/N): ";
+            std::getline(std::cin, input);
+
+            if (input != "Y" && input != "y")
+            {
+                std::cout << "Thanks for playing. See you next time!\n";
+                break;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[ERROR] Client failed: " << e.what() << "\n";
+            break;
+        }
+    }
     return 0;
 }

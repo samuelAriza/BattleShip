@@ -160,248 +160,254 @@ namespace BattleshipServer
             }
         };
 
-        auto handle_timeout = [&](int current_player)
+        try
         {
-            std::cout << "[DEBUG] Tiempo de turno excedido para jugador " << current_player << std::endl;
-            log_fn(players_.at(current_player).second, "Turn timeout", "Player " + std::to_string(current_player) + " perdió el turno", "INFO");
+            // Fase de Registro
+            std::cout << "[DEBUG] Iniciando fase REGISTRATION para sesión " << session_id_ << std::endl;
+            std::set<int> registered_players;
+            while (registered_players.size() < 2 && !finished_)
+            {
+                for (int i = 1; i <= 2; ++i)
+                {
+                    if (registered_players.count(i))
+                        continue;
+                    int client_fd = players_.at(i).first;
+                    std::string client_ip = players_.at(i).second;
+                    try
+                    {
+                        std::cout << "[DEBUG] Esperando REGISTER de jugador " << i << " (client_fd: " << client_fd << ")" << std::endl;
+                        auto messages = receive_messages(client_fd);
+                        for (const auto &msg : messages)
+                        {
+                            if (game_->get_phase() != BattleShipProtocol::PhaseState::Phase::REGISTRATION)
+                            {
+                                std::cerr << "[ERROR] Fase inválida para mensaje recibido en REGISTRATION" << std::endl;
+                                send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Mensaje recibido en fase incorrecta"}});
+                                continue;
+                            }
+                            if (msg.type != BattleShipProtocol::MessageType::REGISTER)
+                            {
+                                std::cerr << "[ERROR] Mensaje inesperado en REGISTRATION: " << protocol_.build_message(msg) << std::endl;
+                                send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado REGISTER"}});
+                                continue;
+                            }
+                            game_->register_player(i, std::get<BattleShipProtocol::RegisterData>(msg.data));
+                            std::cout << "[DEBUG] Jugador " << i << " registrado correctamente" << std::endl;
+                            log_fn(client_ip, protocol_.build_message(msg), "Player " + std::to_string(i) + " registered", "INFO");
+                            registered_players.insert(i);
+                            break;
+                        }
+                    }
+                    catch (const BattleShipProtocol::ProtocolError &e)
+                    {
+                        handle_disconnect(i, client_ip, e.what());
+                        return;
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << "[ERROR] Error inesperado en REGISTRATION para jugador " << i << ": " << e.what() << std::endl;
+                        log_fn(client_ip, "Unexpected error in REGISTRATION", e.what(), "ERROR");
+                        handle_disconnect(i, client_ip, "Unexpected error: " + std::string(e.what()));
+                        return;
+                    }
+                }
+            }
 
-            // Cambiar el turno manualmente
-            current_player = (current_player == 1) ? 2 : 1;
-            turn_start_time_ = std::chrono::steady_clock::now();
+            // Fase de Colocación de Barcos
+            std::cout << "[DEBUG] Transicionando a fase PLACEMENT para sesión " << session_id_ << std::endl;
+            game_->transition_to_placement();
+            std::set<int> placed_ships;
+            while (placed_ships.size() < 2 && !finished_)
+            {
+                for (int i = 1; i <= 2; ++i)
+                {
+                    if (placed_ships.count(i))
+                        continue;
+                    int client_fd = players_.at(i).first;
+                    std::string client_ip = players_.at(i).second;
+                    try
+                    {
+                        std::cout << "[DEBUG] Esperando PLACE_SHIPS de jugador " << i << " (client_fd: " << client_fd << ")" << std::endl;
+                        auto messages = receive_messages(client_fd);
+                        for (const auto &msg : messages)
+                        {
+                            if (game_->get_phase() != BattleShipProtocol::PhaseState::Phase::PLACEMENT)
+                            {
+                                std::cerr << "[ERROR] Fase inválida para mensaje recibido en PLACEMENT" << std::endl;
+                                send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Mensaje recibido en fase incorrecta"}});
+                                continue;
+                            }
+                            if (msg.type != BattleShipProtocol::MessageType::PLACE_SHIPS)
+                            {
+                                std::cerr << "[ERROR] Mensaje inesperado en PLACEMENT: " << protocol_.build_message(msg) << std::endl;
+                                send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado PLACE_SHIPS"}});
+                                continue;
+                            }
+                            game_->place_ships(i, std::get<BattleShipProtocol::PlaceShipsData>(msg.data));
+                            std::cout << "[DEBUG] Jugador " << i << " colocó barcos correctamente" << std::endl;
+                            log_fn(client_ip, protocol_.build_message(msg), "Ships placed", "INFO");
+                            placed_ships.insert(i);
+                            break;
+                        }
+                    }
+                    catch (const BattleShipProtocol::ProtocolError &e)
+                    {
+                        handle_disconnect(i, client_ip, e.what());
+                        return;
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << "[ERROR] Error inesperado en PLACEMENT para jugador " << i << ": " << e.what() << std::endl;
+                        log_fn(client_ip, "Unexpected error in PLACEMENT", e.what(), "ERROR");
+                        handle_disconnect(i, client_ip, "Unexpected error: " + std::string(e.what()));
+                        return;
+                    }
+                }
+            }
 
-            // Enviar STATUS actualizado a ambos jugadores
+            // Transición a PLAYING
+            std::cout << "[DEBUG] Transicionando a fase PLAYING para sesión " << session_id_ << std::endl;
+            game_->transition_to_playing();
+
+            int current_player = 1;
             for (int i = 1; i <= 2; ++i)
             {
                 send_status(i, current_player);
             }
-        };
 
-        // Fase de Registro
-        std::cout << "[DEBUG] Iniciando fase REGISTRATION para sesión " << session_id_ << std::endl;
-        std::set<int> registered_players;
-        while (registered_players.size() < 2 && !finished_)
-        {
-            for (int i = 1; i <= 2; ++i)
+            // Fase de Juego
+            std::cout << "[DEBUG] Iniciando fase PLAYING, turno inicial: Jugador " << current_player << std::endl;
+
+            while (!finished_)
             {
-                if (registered_players.count(i))
-                    continue;
-                int client_fd = players_.at(i).first;
-                std::string client_ip = players_.at(i).second;
-                try
+                int client_fd = players_.at(current_player).first;
+                std::string client_ip = players_.at(current_player).second;
+                turn_start_time_ = std::chrono::steady_clock::now();
+
+                bool turn_finished = false;
+
+                while (!turn_finished && !finished_)
                 {
-                    std::cout << "[DEBUG] Esperando REGISTER de jugador " << i << " (client_fd: " << client_fd << ")" << std::endl;
-                    auto messages = receive_messages(client_fd);
-                    for (const auto &msg : messages)
+                    try
                     {
-                        if (game_->get_phase() != BattleShipProtocol::PhaseState::Phase::REGISTRATION)
+                        auto now = std::chrono::steady_clock::now();
+                        int elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - turn_start_time_).count();
+
+                        // ⏳ Verificamos timeout manualmente
+                        if (elapsed >= TURN_TIMEOUT_SECONDS)
                         {
-                            std::cerr << "[ERROR] Fase inválida para mensaje recibido en REGISTRATION" << std::endl;
-                            send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Mensaje recibido en fase incorrecta"}});
-                            continue;
-                        }
-                        if (msg.type != BattleShipProtocol::MessageType::REGISTER)
-                        {
-                            std::cerr << "[ERROR] Mensaje inesperado en REGISTRATION: " << protocol_.build_message(msg) << std::endl;
-                            send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado REGISTER"}});
-                            continue;
-                        }
-                        game_->register_player(i, std::get<BattleShipProtocol::RegisterData>(msg.data));
-                        std::cout << "[DEBUG] Jugador " << i << " registrado correctamente" << std::endl;
-                        log_fn(client_ip, protocol_.build_message(msg), "Player " + std::to_string(i) + " registered", "INFO");
-                        registered_players.insert(i);
-                        break;
-                    }
-                }
-                catch (const BattleShipProtocol::ProtocolError &e)
-                {
-                    if (std::string(e.what()).find("Client disconnected") != std::string::npos)
-                    {
-                        handle_disconnect(i, client_ip, e.what());
-                        return;
-                    }
-                    std::cerr << "[ERROR] Error procesando REGISTER para jugador " << i << ": " << e.what() << std::endl;
-                    send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, e.what()}});
-                    log_fn(client_ip, "REGISTER failed", e.what(), "ERROR");
-                    finished_ = true;
-                    return;
-                }
-            }
-        }
+                            std::cout << "[TIMEOUT] Jugador " << current_player << " perdió el turno\n";
+                            log_fn(client_ip, "Turn timeout", "Turno perdido", "INFO");
 
-        // Fase de Colocación de Barcos
-        std::cout << "[DEBUG] Transicionando a fase PLACEMENT para sesión " << session_id_ << std::endl;
-        game_->transition_to_placement();
-        std::set<int> placed_ships;
-        while (placed_ships.size() < 2 && !finished_)
-        {
-            for (int i = 1; i <= 2; ++i)
-            {
-                if (placed_ships.count(i))
-                    continue;
-                int client_fd = players_.at(i).first;
-                std::string client_ip = players_.at(i).second;
-                try
-                {
-                    std::cout << "[DEBUG] Esperando PLACE_SHIPS de jugador " << i << " (client_fd: " << client_fd << ")" << std::endl;
-                    auto messages = receive_messages(client_fd);
-                    for (const auto &msg : messages)
-                    {
-                        if (game_->get_phase() != BattleShipProtocol::PhaseState::Phase::PLACEMENT)
-                        {
-                            std::cerr << "[ERROR] Fase inválida para mensaje recibido en PLACEMENT" << std::endl;
-                            send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Mensaje recibido en fase incorrecta"}});
-                            continue;
-                        }
-                        if (msg.type != BattleShipProtocol::MessageType::PLACE_SHIPS)
-                        {
-                            std::cerr << "[ERROR] Mensaje inesperado en PLACEMENT: " << protocol_.build_message(msg) << std::endl;
-                            send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado PLACE_SHIPS"}});
-                            continue;
-                        }
-                        game_->place_ships(i, std::get<BattleShipProtocol::PlaceShipsData>(msg.data));
-                        std::cout << "[DEBUG] Jugador " << i << " colocó barcos correctamente" << std::endl;
-                        log_fn(client_ip, protocol_.build_message(msg), "Ships placed", "INFO");
-                        placed_ships.insert(i);
-                        break;
-                    }
-                }
-                catch (const BattleShipProtocol::ProtocolError &e)
-                {
-                    if (std::string(e.what()).find("Client disconnected") != std::string::npos)
-                    {
-                        handle_disconnect(i, client_ip, e.what());
-                        return;
-                    }
-                    std::cerr << "[ERROR] Error procesando PLACE_SHIPS para jugador " << i << ": " << e.what() << std::endl;
-                    send_fn(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, e.what()}});
-                    log_fn(client_ip, "PLACE_SHIPS failed", e.what(), "ERROR");
-                    finished_ = true;
-                    return;
-                }
-            }
-        }
-
-        // Transición a PLAYING
-        std::cout << "[DEBUG] Transicionando a fase PLAYING para sesión " << session_id_ << std::endl;
-        game_->transition_to_playing();
-
-        int current_player = 1;
-        for (int i = 1; i <= 2; ++i)
-        {
-            send_status(i, current_player);
-        }
-
-        // Fase de Juego
-        // Fase de Juego
-        std::cout << "[DEBUG] Iniciando fase PLAYING, turno inicial: Jugador " << current_player << std::endl;
-
-        while (!finished_)
-        {
-            int client_fd = players_.at(current_player).first;
-            std::string client_ip = players_.at(current_player).second;
-            turn_start_time_ = std::chrono::steady_clock::now();
-
-            bool turn_finished = false;
-
-            while (!turn_finished && !finished_)
-            {
-                auto now = std::chrono::steady_clock::now();
-                int elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - turn_start_time_).count();
-
-                // ⏳ Verificamos timeout manualmente
-                if (elapsed >= TURN_TIMEOUT_SECONDS)
-                {
-                    std::cout << "[TIMEOUT] Jugador " << current_player << " perdió el turno\n";
-                    log_fn(client_ip, "Turn timeout", "Turno perdido", "INFO");
-
-                    current_player = (current_player == 1) ? 2 : 1; // 👈 cambio persistente
-                    turn_start_time_ = std::chrono::steady_clock::now();
-
-                    for (int i = 1; i <= 2; ++i)
-                        send_status(i, current_player); // 👈 nuevo turno reflejado
-
-                    turn_finished = true;
-                    break;
-                }
-
-                // 🔍 Verificamos si hay datos del jugador actual
-                fd_set read_fds;
-                FD_ZERO(&read_fds);
-                FD_SET(client_fd, &read_fds);
-
-                struct timeval timeout;
-                timeout.tv_sec = 1; // Esperamos máximo 1 segundo para revisar otra vez
-                timeout.tv_usec = 0;
-
-                int result = select(client_fd + 1, &read_fds, nullptr, nullptr, &timeout);
-                if (result < 0 && errno != EINTR)
-                {
-                    std::cerr << "[ERROR] select() falló: " << strerror(errno) << std::endl;
-                    break;
-                }
-
-                if (result == 0)
-                {
-                    continue; // Timeout de select → seguimos al siguiente ciclo
-                }
-
-                if (FD_ISSET(client_fd, &read_fds))
-                {
-                    auto messages = receive_messages(client_fd);
-                    for (const auto &msg : messages)
-                    {
-                        if (msg.type == BattleShipProtocol::MessageType::SURRENDER)
-                        {
-                            std::cout << "[DEBUG] Jugador " << current_player << " se rinde\n";
-                            game_->transition_to_finished();
-
-                            int winner = (current_player == 1) ? 2 : 1;
-                            send_message(players_.at(winner).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_WIN"}}, protocol_);
-                            send_message(players_.at(current_player).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_LOSE"}}, protocol_);
-                            finished_ = true;
-                            return;
-                        }
-
-                        if (msg.type != BattleShipProtocol::MessageType::SHOOT)
-                        {
-                            send_message(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado SHOOT"}}, protocol_);
-                            continue;
-                        }
-
-                        try
-                        {
-                            auto shoot_data = std::get<BattleShipProtocol::ShootData>(msg.data);
-                            game_->process_shot(current_player, shoot_data);
                             current_player = (current_player == 1) ? 2 : 1;
                             turn_start_time_ = std::chrono::steady_clock::now();
 
                             for (int i = 1; i <= 2; ++i)
-                            {
                                 send_status(i, current_player);
-                            }
-
-                            if (game_->is_game_over())
-                            {
-                                game_->transition_to_finished();
-                                int winner_id = current_player;
-                                int loser_id = (current_player == 1) ? 2 : 1;
-
-                                send_message(players_.at(winner_id).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_WIN"}}, protocol_);
-                                send_message(players_.at(loser_id).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_LOSE"}}, protocol_);
-                                finished_ = true;
-                                return;
-                            }
 
                             turn_finished = true;
                             break;
                         }
-                        catch (const BattleShipProtocol::GameLogicError &e)
+
+                        // 🔍 Verificamos si hay datos del jugador actual
+                        fd_set read_fds;
+                        FD_ZERO(&read_fds);
+                        FD_SET(client_fd, &read_fds);
+
+                        struct timeval timeout;
+                        timeout.tv_sec = 1;
+                        timeout.tv_usec = 0;
+
+                        int result = select(client_fd + 1, &read_fds, nullptr, nullptr, &timeout);
+                        if (result < 0 && errno != EINTR)
                         {
-                            send_message(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, e.what()}}, protocol_);
+                            std::cerr << "[ERROR] select() falló: " << strerror(errno) << std::endl;
+                            handle_disconnect(current_player, client_ip, "select() failed: " + std::string(strerror(errno)));
+                            return;
                         }
+
+                        if (result == 0)
+                        {
+                            continue;
+                        }
+
+                        if (FD_ISSET(client_fd, &read_fds))
+                        {
+                            auto messages = receive_messages(client_fd);
+                            for (const auto &msg : messages)
+                            {
+                                if (msg.type == BattleShipProtocol::MessageType::SURRENDER)
+                                {
+                                    std::cout << "[DEBUG] Jugador " << current_player << " se rinde\n";
+                                    game_->transition_to_finished();
+
+                                    int winner = (current_player == 1) ? 2 : 1;
+                                    send_message(players_.at(winner).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_WIN"}}, protocol_);
+                                    send_message(players_.at(current_player).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_LOSE"}}, protocol_);
+                                    finished_ = true;
+                                    return;
+                                }
+
+                                if (msg.type != BattleShipProtocol::MessageType::SHOOT)
+                                {
+                                    send_message(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, "Esperado SHOOT"}}, protocol_);
+                                    continue;
+                                }
+
+                                try
+                                {
+                                    auto shoot_data = std::get<BattleShipProtocol::ShootData>(msg.data);
+                                    game_->process_shot(current_player, shoot_data);
+                                    current_player = (current_player == 1) ? 2 : 1;
+                                    turn_start_time_ = std::chrono::steady_clock::now();
+
+                                    for (int i = 1; i <= 2; ++i)
+                                    {
+                                        send_status(i, current_player);
+                                    }
+
+                                    if (game_->is_game_over())
+                                    {
+                                        game_->transition_to_finished();
+                                        int winner_id = current_player;
+                                        int loser_id = (current_player == 1) ? 2 : 1;
+
+                                        send_message(players_.at(winner_id).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_WIN"}}, protocol_);
+                                        send_message(players_.at(loser_id).first, {BattleShipProtocol::MessageType::GAME_OVER, BattleShipProtocol::GameOverData{"YOU_LOSE"}}, protocol_);
+                                        finished_ = true;
+                                        return;
+                                    }
+
+                                    turn_finished = true;
+                                    break;
+                                }
+                                catch (const BattleShipProtocol::GameLogicError &e)
+                                {
+                                    send_message(client_fd, {BattleShipProtocol::MessageType::ERROR, BattleShipProtocol::ErrorData{400, e.what()}}, protocol_);
+                                }
+                            }
+                        }
+                    }
+                    catch (const BattleShipProtocol::ProtocolError &e)
+                    {
+                        handle_disconnect(current_player, client_ip, e.what());
+                        return;
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << "[ERROR] Error inesperado en PLAYING para jugador " << current_player << ": " << e.what() << std::endl;
+                        log_fn(client_ip, "Unexpected error in PLAYING", e.what(), "ERROR");
+                        handle_disconnect(current_player, client_ip, "Unexpected error: " + std::string(e.what()));
+                        return;
                     }
                 }
             }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[ERROR] Error crítico en run_session: " << e.what() << std::endl;
+            log_fn("0.0.0.0", "Critical error in run_session", e.what(), "ERROR");
+            finished_ = true;
         }
     }
 
