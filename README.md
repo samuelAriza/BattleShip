@@ -673,3 +673,8 @@ Another core focus was robust error handling in a distributed context. The syste
 Comprehensive unit and integration testing further reinforced the system's reliability. Modules such as GameLogic, PhaseState, and Protocol were exhaustively tested to validate correctness, edge case behavior, and compliance with the BNF grammar specification. These tests played a pivotal role in identifying and resolving subtle bugs during development.
 
 Ultimately, this project not only fulfills the academic objectives of the ST0255 Telemática course but also serves as a solid foundation for future extensions—such as AI opponents, graphical interfaces, or matchmaking services. It stands as a testament to the effective application of systems programming principles in building a concurrent, fault-tolerant, and user-responsive multiplayer game architecture.
+
+---
+
+> Built with passion, sockets, and many cups of coffee ☕  
+> by [Samuel Andrés Ariza Gómez](https://github.com/samuelAriza) & [Andrés Vélez Rendón](https://github.com/AndresVelezR)
