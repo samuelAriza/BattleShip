@@ -110,7 +110,11 @@ For a detailed overview of the functional and non-functional requirements of thi
 
 ## 4. Architecture Design
 ### 4.1 Client-Server Model Overview
+![UML Class Diagram](assets/diagram_deployment.png)
+🔗 [Battleship Architecture (Deployment) Diagram](https://drive.google.com/drive/folders/13WqH-RQvgxA6bTyvapd2XzSNkvFG8cUw?usp=sharing)
 ### 4.2 Component Diagram 
+![UML Class Diagram](assets/diagram_component.png)
+🔗 [Battleship Component Diagram](https://drive.google.com/drive/folders/13WqH-RQvgxA6bTyvapd2XzSNkvFG8cUw?usp=sharing)
 ### 4.3 Protocol specification
 #### 4.3.1 Notational Conventions and Generic Grammar (BNF)
 The following BNF (Backus-Naur Form) defines the formal grammar for the communication protocol used in the client-server interaction of the Battleship game. This protocol is designed to ensure strict syntactic and semantic consistency across all message exchanges, enabling reliable parsing, validation, and processing of game-related instructions and states.
@@ -215,6 +219,7 @@ Returns a structured error code and description.
 ## 5 Detailed Design
 ### 5.1 Class Diagram 
 ![UML Class Diagram](assets/class_diagram.png)
+🔗 [UML Class Diagram](https://drive.google.com/drive/folders/13WqH-RQvgxA6bTyvapd2XzSNkvFG8cUw?usp=sharing)
 ### 5.2 Concurrency Model
 #### Overview
 The Battleship server is designed to facilitate multiple concurrent game sessions for pairs of players, using TCP sockets via the Berkeley Sockets API. The concurrency model employs threads to manage client connections, game sessions and cleanup tasks, ensuring efficient resource utilization through synchronization mechanisms to avoid race conditions and responsiveness. The model is robust and scalable, and fits the project requirements for concurrent multiplayer, state synchronization and error handling.
@@ -329,9 +334,12 @@ These finite state machines abstract low-level details of the network connection
 
 #### Server Finite State Machine
 ![FSM Server](assets/FSM-Server.png)
+🔗 [FSM Server](https://drive.google.com/drive/folders/13WqH-RQvgxA6bTyvapd2XzSNkvFG8cUw?usp=sharing)
+
 
 #### Client Finite State Machine
 ![FSM Server](assets/FSM-Client.png)
+🔗 [FSM Server](https://drive.google.com/drive/folders/13WqH-RQvgxA6bTyvapd2XzSNkvFG8cUw?usp=sharing)
 
 
 
