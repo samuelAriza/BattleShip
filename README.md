@@ -372,7 +372,7 @@ The following tools and libraries were utilized to develop, test, and deploy the
 To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow these steps:
 1. Launch EC2 Instance:
 	- Log in to AWS Academy and access the EC2 dashboard. 
-	- Launch a t2.micro instance with xxx.
+	- Launch a t2.micro instance with Ubuntu Server 24.04 LTS.
 	- Configure the security group to allow TCP traffic on port 8080.
 2. Install Dependencies:
 	- Connect to the instance via SSH.
