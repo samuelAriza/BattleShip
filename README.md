@@ -664,3 +664,12 @@ Result
 ## 8 Video
 
 ## 9 Conclusion
+The Battleship project represents a comprehensive and technically robust implementation of a networked multiplayer game, successfully integrating core concepts of distributed systems, concurrency, and custom protocol design. By leveraging the Berkeley Sockets API and C++ threading mechanisms, the system supports simultaneous game sessions, dynamic client management, and real-time state synchronization, all while maintaining scalability and responsiveness.
+
+One of the most significant technical challenges tackled during development was concurrency management. Coordinating multiple game sessions across threads required precise synchronization to avoid race conditions and ensure data integrity. This was achieved through disciplined use of mutexes, atomic operations, and careful thread lifecycle control. The hybrid threading model, combined with the cleanup and session management strategies, proved effective in balancing performance with safety in a multithreaded environment.
+
+Another core focus was robust error handling in a distributed context. The system anticipates and manages various failure modes—including invalid input, disconnections, protocol violations, and timeouts—by employing exception-based control flow, detailed error logging, and graceful degradation mechanisms. The protocol itself was designed with extensibility and resilience in mind, ensuring that malformed or unexpected messages do not compromise the stability of active sessions.
+
+Comprehensive unit and integration testing further reinforced the system's reliability. Modules such as GameLogic, PhaseState, and Protocol were exhaustively tested to validate correctness, edge case behavior, and compliance with the BNF grammar specification. These tests played a pivotal role in identifying and resolving subtle bugs during development.
+
+Ultimately, this project not only fulfills the academic objectives of the ST0255 Telemática course but also serves as a solid foundation for future extensions—such as AI opponents, graphical interfaces, or matchmaking services. It stands as a testament to the effective application of systems programming principles in building a concurrent, fault-tolerant, and user-responsive multiplayer game architecture.
