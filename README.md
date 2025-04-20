@@ -70,7 +70,7 @@ This document is intended for:
 
 ### 1.5 Project Structure
 The directory and file structure of the project is shown below:
-```json
+```
 BATTLESHIP
 ├── assets
 ├── build
