@@ -375,14 +375,14 @@ To deploy the C++ server on an AWS EC2 instance provided by AWS Academy, follow 
 	- Configure the security group to allow TCP traffic on port 8080.
 2. Install Dependencies:
 	- Connect to the instance via SSH.
-	- Update the system and install GCC for C++:
+	- Update the system and install GCC for C++, CMake and Make for automating compilation:
       ```bash
       sudo apt update -y
       sudo apt install -y gcc-c++ make git
       ```
 3. Clone the repository:
       ```bash
-      git clone git@github.com:user/Repo.git
+      git clone git@github.com:samuelAriza/BattleShip.git
       ```
 4. Compile and Run:
 
