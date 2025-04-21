@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     std::cout << "Enter your email: ";
     std::getline(std::cin, email);
 
-    const std::string server_ip = "54.146.170.52"; //"127.0.0.1";
+    const std::string server_ip = "127.0.0.1";
     const int server_port = 8080 ;
     while (true)
 {
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     {
         BattleshipClient::Client client(server_ip, server_port, nickname, email, log_path);
         client.run();  // Ejecuta una partida completa
-
+        std::cout << "ESTOY EN EL MAIN " << std::endl;
         std::string input;
 
         std::cout << "\n==========================================\n";

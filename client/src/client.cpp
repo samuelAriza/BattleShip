@@ -169,36 +169,26 @@ namespace BattleshipClient
                     game_ended = true;
                 }
             }
-
-            // Fase de Juego
+            bool surr = false;
             while (running_ && !game_ended)
             {
+                bool surr = false;
+                if(surr){
+                    break;
+                }
                 std::unique_lock<std::mutex> lock(state_mutex_);
                 if (last_status_.gameState == BattleShipProtocol::GameState::ENDED || !running_)
                 {
                     game_ended = true;
                     break;
                 }
-                if (last_status_.turn == BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
-                {
-                    std::cout << "[INFO] Tu turno ha comenzado. Tienes 30 segundos.\n";
-                }
-                if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN && last_status_.time_remaining == 30)
-                {
-                    std::cout << "[INFO] Turno del oponente. Esperando...\n";
-                }
 
-                if (last_status_.turn != BattleShipProtocol::Turn::YOUR_TURN ||
-                    last_status_.gameState != BattleShipProtocol::GameState::ONGOING)
-                {
-                    lock.unlock();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                    continue;
-                }
+                bool is_your_turn = (last_status_.turn == BattleShipProtocol::Turn::YOUR_TURN &&
+                                     last_status_.gameState == BattleShipProtocol::GameState::ONGOING);
                 lock.unlock();
 
                 struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
-                int poll_result = poll(&pfd, 1, 100); 
+                int poll_result = poll(&pfd, 1, 100);
                 if (poll_result < 0)
                 {
                     std::cerr << "[ERROR] Poll failed: " << strerror(errno) << std::endl;
@@ -207,24 +197,44 @@ namespace BattleshipClient
                     break;
                 }
 
-                
                 if (!running_ || last_status_.gameState == BattleShipProtocol::GameState::ENDED)
                 {
                     game_ended = true;
                     break;
                 }
-
-                
+                // fase de juego
                 if (poll_result > 0 && (pfd.revents & POLLIN))
                 {
                     std::string input;
+                    if(surr){
                     std::cout << "\nIngresa tu elección: ";
-                    std::cout.flush(); 
+                    }
+                    std::cout.flush();
                     std::getline(std::cin, input);
 
                     try
                     {
-                        if (input.substr(0, 6) == "SHOOT ")
+                        if (input == "SURRENDER" || input == "4")
+                    {   
+                        
+                        std::cout << "Cargando, saliendo de la partida...";
+                        bool surr = true;
+
+                        BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
+                        send_message(surrender_msg);
+                        log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
+                        std::cout << "Cargando, saliendo de la partida...";
+                        running_ = false;
+                        game_ended = true;
+                        return; // Exit send_loop immediately
+                    }
+                        else if (!is_your_turn)
+                        {
+                            std::cout << "[ERROR] No es tu turno. Solo puedes rendirte con 'SURRENDER' o '4'.\n";
+                            
+                            continue;
+                        }
+                        else if (input.substr(0, 6) == "SHOOT ")
                         {
                             std::string coord = input.substr(6);
                             if (coord.length() < 2)
@@ -254,23 +264,13 @@ namespace BattleshipClient
                             send_message(shoot_msg);
                             log(protocol_.build_message(shoot_msg), "Sent shot", "INFO");
                         }
-                        else if (input == "SURRENDER" || input == "4")
-                        {
-                            std::cout << "[DEBUG] Enviando SURRENDER\n";
-                            BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
-                            send_message(surrender_msg);
-                            log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
-                            running_ = false;
-                            game_ended = true;
-                            break;
-                        }
                         else if (input == "2")
                         {
                             display_shot_history();
                         }
                         else if (input == "3" || input == "QUIT" || input == "quit")
                         {
-                            std::cout << "Saliendo del juego...\n";
+                            std::cout << "¡Gracias por jugar! ¡Hasta la próxima!\n";
                             running_ = false;
                             return;
                         }
@@ -289,6 +289,10 @@ namespace BattleshipClient
                         log(input, "Formato de entrada inválido: " + std::string(e.what()), "ERROR");
                     }
                 }
+                else if (!is_your_turn)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                }
             }
 
             // Menú de fin de juego
@@ -298,8 +302,7 @@ namespace BattleshipClient
                 while (!valid_choice)
                 {
                     std::cout << "\nEl juego ha terminado.\n";
-                    std::cout << "Opciones:\n";
-                    
+                    std::cout << "Saliendo de la partida....:\n";
                     return;
                 
                 }
@@ -883,6 +886,8 @@ namespace BattleshipClient
 
         log("Finished rendering boards and menu", "Player: " + nickname_, "DEBUG");
     }
+
+
 
     void Client::display_shot_history() const
     {
