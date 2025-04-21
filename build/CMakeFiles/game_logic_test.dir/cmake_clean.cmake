@@ -1,5 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/game_logic_test.dir/link.d"
   "CMakeFiles/game_logic_test.dir/protocol/test/game_logic_test.cpp.o"
   "CMakeFiles/game_logic_test.dir/protocol/test/game_logic_test.cpp.o.d"
   "game_logic_test"

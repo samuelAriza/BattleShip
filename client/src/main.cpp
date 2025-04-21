@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <filesystem>
+#include <algorithm>
 #include <../../include/dotenv.h>
 
 std::string get_env(const std::string& key, const std::string& fallback) {
@@ -45,30 +46,41 @@ int main(int argc, char *argv[])
     std::cout << "Enter your email: ";
     std::getline(std::cin, email);
 
-    const std::string server_ip = "54.146.170.52";
+    const std::string server_ip = "54.146.170.52"; //"127.0.0.1";
     const int server_port = 8080 ;
     while (true)
+{
+    try
     {
-        try
-        {
-            BattleshipClient::Client client(server_ip, server_port, nickname, email, log_path);
-            client.run(); // Runs a complete game
+        BattleshipClient::Client client(server_ip, server_port, nickname, email, log_path);
+        client.run();  // Ejecuta una partida completa
 
-            std::string input;
-            std::cout << "\nDo you want to play another game? (Y/N): ";
-            std::getline(std::cin, input);
+        std::string input;
 
-            if (input != "Y" && input != "y")
-            {
-                std::cout << "Thanks for playing. See you next time!\n";
-                break;
-            }
-        }
-        catch (const std::exception &e)
+        std::cout << "\n==========================================\n";
+        std::cout << "         ¿Deseas jugar otra partida?\n";
+        std::cout << "==========================================\n";
+        std::cout << " > Ingresa cualquier tecla para continuar\n";
+        std::cout << " > Escribe 'Q' o 'QUIT' para salir\n";
+        std::cout << "------------------------------------------\n";
+        std::cout << " > Tu elección: ";
+        std::getline(std::cin, input);
+
+        
+        std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+        
+        if (input == "q" || input == "quit")
         {
-            std::cerr << "[ERROR] Client failed: " << e.what() << "\n";
+            std::cout << "\nGracias por jugar. ¡Hasta la próxima!\n";
             break;
         }
     }
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << "\n[ERROR] Fallo en el cliente: " << e.what() << "\n";
+        break;
+    }
+}
+
+return 0;
 }

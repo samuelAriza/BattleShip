@@ -1,7 +1,7 @@
 CMakeFiles/protocol.dir/protocol/src/phase_state.cpp.o: \
- /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/phase_state.cpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/phase_state.cpp \
  /usr/include/stdc-predef.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/phase_state.hpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/phase_state.hpp \
  /usr/include/c++/14/stdexcept /usr/include/c++/14/exception \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/os_defines.h \

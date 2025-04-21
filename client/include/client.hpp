@@ -58,6 +58,7 @@ namespace BattleshipClient
         void run();
 
     private:
+        
         /**
          * @brief Resets the client's state for a new game.
          */

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <random>
 #include <array>
+#include <poll.h>
 
 namespace BattleshipClient
 {
@@ -196,80 +197,97 @@ namespace BattleshipClient
                 }
                 lock.unlock();
 
-                std::string input;
-                std::cout << "\nIngresa tu elección: ";
-                std::getline(std::cin, input);
-                if (!running_)
+                struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
+                int poll_result = poll(&pfd, 1, 100); 
+                if (poll_result < 0)
+                {
+                    std::cerr << "[ERROR] Poll failed: " << strerror(errno) << std::endl;
+                    running_ = false;
+                    game_ended = true;
+                    break;
+                }
+
+                
+                if (!running_ || last_status_.gameState == BattleShipProtocol::GameState::ENDED)
                 {
                     game_ended = true;
                     break;
                 }
 
-                try
+                
+                if (poll_result > 0 && (pfd.revents & POLLIN))
                 {
-                    if (input.substr(0, 6) == "SHOOT ")
-                    {
-                        std::string coord = input.substr(6);
-                        if (coord.length() < 2)
-                        {
-                            std::cout << "[ERROR] Coordenada inválida: demasiado corta (ej. usa 'SHOOT A1')" << std::endl;
-                            continue;
-                        }
-                        std::string letter = coord.substr(0, 1);
-                        int number = std::stoi(coord.substr(1));
-                        if (letter < "A" || letter > "J" || number < 1 || number > 10)
-                        {
-                            std::cout << "[ERROR] Coordenada inválida: usa A-J y 1-10 (ej. 'SHOOT A1')" << std::endl;
-                            continue;
-                        }
-                        auto coord_pair = std::make_pair(letter, number);
-                        if (shot_history_.find(coord_pair) != shot_history_.end())
-                        {
-                            std::cout << "[ERROR] Ya disparaste en " << letter << number << ". Selecciona otra coordenada.\n";
-                            continue;
-                        }
-                        shot_history_.insert(coord_pair);
+                    std::string input;
+                    std::cout << "\nIngresa tu elección: ";
+                    std::cout.flush(); 
+                    std::getline(std::cin, input);
 
-                        std::cout << "[DEBUG] Enviando SHOOT a coordenada: " << letter << number << std::endl;
-                        BattleShipProtocol::Message shoot_msg{
-                            BattleShipProtocol::MessageType::SHOOT,
-                            BattleShipProtocol::ShootData{BattleShipProtocol::Coordinate{letter, number}}};
-                        send_message(shoot_msg);
-                        log(protocol_.build_message(shoot_msg), "Sent shot", "INFO");
-                    }
-                    else if (input == "SURRENDER" || input == "4")
+                    try
                     {
-                        std::cout << "[DEBUG] Enviando SURRENDER\n";
-                        BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
-                        send_message(surrender_msg);
-                        log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
-                        running_ = false;
-                        game_ended = true;
-                        break;
+                        if (input.substr(0, 6) == "SHOOT ")
+                        {
+                            std::string coord = input.substr(6);
+                            if (coord.length() < 2)
+                            {
+                                std::cout << "[ERROR] Coordenada inválida: demasiado corta (ej. usa 'SHOOT A1')" << std::endl;
+                                continue;
+                            }
+                            std::string letter = coord.substr(0, 1);
+                            int number = std::stoi(coord.substr(1));
+                            if (letter < "A" || letter > "J" || number < 1 || number > 10)
+                            {
+                                std::cout << "[ERROR] Coordenada inválida: usa A-J y 1-10 (ej. 'SHOOT A1')" << std::endl;
+                                continue;
+                            }
+                            auto coord_pair = std::make_pair(letter, number);
+                            if (shot_history_.find(coord_pair) != shot_history_.end())
+                            {
+                                std::cout << "[ERROR] Ya disparaste en " << letter << number << ". Selecciona otra coordenada.\n";
+                                continue;
+                            }
+                            shot_history_.insert(coord_pair);
+
+                            std::cout << "[DEBUG] Enviando SHOOT a coordenada: " << letter << number << std::endl;
+                            BattleShipProtocol::Message shoot_msg{
+                                BattleShipProtocol::MessageType::SHOOT,
+                                BattleShipProtocol::ShootData{BattleShipProtocol::Coordinate{letter, number}}};
+                            send_message(shoot_msg);
+                            log(protocol_.build_message(shoot_msg), "Sent shot", "INFO");
+                        }
+                        else if (input == "SURRENDER" || input == "4")
+                        {
+                            std::cout << "[DEBUG] Enviando SURRENDER\n";
+                            BattleShipProtocol::Message surrender_msg{BattleShipProtocol::MessageType::SURRENDER};
+                            send_message(surrender_msg);
+                            log(protocol_.build_message(surrender_msg), "Sent surrender", "INFO");
+                            running_ = false;
+                            game_ended = true;
+                            break;
+                        }
+                        else if (input == "2")
+                        {
+                            display_shot_history();
+                        }
+                        else if (input == "3" || input == "QUIT" || input == "quit")
+                        {
+                            std::cout << "Saliendo del juego...\n";
+                            running_ = false;
+                            return;
+                        }
+                        else
+                        {
+                            std::cout << "[ERROR] Entrada inválida. Usa:\n";
+                            std::cout << "  1. 'SHOOT <letra><número>' para disparar\n";
+                            std::cout << "  2 para ver historial de disparos\n";
+                            std::cout << "  3 o 'QUIT' para salir\n";
+                            std::cout << "  4 o 'SURRENDER' para rendirse\n";
+                        }
                     }
-                    else if (input == "2")
+                    catch (const std::exception &e)
                     {
-                        display_shot_history();
+                        std::cerr << "[ERROR] Formato de entrada inválido: " << e.what() << std::endl;
+                        log(input, "Formato de entrada inválido: " + std::string(e.what()), "ERROR");
                     }
-                    else if (input == "3" || input == "QUIT" || input == "quit")
-                    {
-                        std::cout << "Saliendo del juego...\n";
-                        running_ = false;
-                        return;
-                    }
-                    else
-                    {
-                        std::cout << "[ERROR] Entrada inválida. Usa:\n";
-                        std::cout << "  1. 'SHOOT <letra><número>' para disparar\n";
-                        std::cout << "  2 para ver historial de disparos\n";
-                        std::cout << "  3 o 'QUIT' para salir\n";
-                        std::cout << "  4 o 'SURRENDER' para rendirse\n";
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "[ERROR] Formato de entrada inválido: " << e.what() << std::endl;
-                    log(input, "Formato de entrada inválido: " + std::string(e.what()), "ERROR");
                 }
             }
 
@@ -281,30 +299,9 @@ namespace BattleshipClient
                 {
                     std::cout << "\nEl juego ha terminado.\n";
                     std::cout << "Opciones:\n";
-                    std::cout << "  5. Nuevo juego\n";
-                    std::cout << "  3. Salir\n";
-                    std::cout << "Ingresa tu elección: ";
-                    std::string input;
-                    std::getline(std::cin, input);
-
-                    if (input == "5")
-                    {
-                        //reset_state();
-                        std::cout << "[INFO] Iniciando un nuevo juego...\n";
-                        valid_choice = true;
-                        return; // Vuelve al inicio del bucle para un nuevo juego
-                    }
-                    else if (input == "3" || input == "QUIT" || input == "quit")
-                    {
-                        std::cout << "Saliendo del juego...\n";
-                        running_ = false;
-                        valid_choice = true;
-                        return;
-                    }
-                    else
-                    {
-                        std::cout << "[ERROR] Opción inválida. Usa '5' para nuevo juego o '3' para salir.\n";
-                    }
+                    
+                    return;
+                
                 }
             }
         //}
@@ -384,8 +381,10 @@ namespace BattleshipClient
                              error_msg.find("Opponent disconnected") != std::string::npos)
                     {
                         std::cerr << "Error: " << error_msg << std::endl;
-                        std::cerr << "El oponente se ha desconectado. El juego ha terminado." << std::endl;
+                        std::cerr << "HAS GANADO. El oponente se ha desconectado. El juego ha terminado." << std::endl;
                         running_ = false;
+                    
+                        
                     }
                     else
                     {

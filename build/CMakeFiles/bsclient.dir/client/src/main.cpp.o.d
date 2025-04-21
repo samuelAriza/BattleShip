@@ -1,7 +1,7 @@
 CMakeFiles/bsclient.dir/client/src/main.cpp.o: \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/src/main.cpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/src/main.cpp \
  /usr/include/stdc-predef.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/include/client.hpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/client.hpp \
  /usr/include/x86_64-linux-gnu/sys/socket.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -151,6 +151,9 @@ CMakeFiles/bsclient.dir/client/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/c++/14/bits/gthr-default.h \
  /usr/include/pthread.h /usr/include/sched.h \
  /usr/include/x86_64-linux-gnu/bits/sched.h \
+ /usr/include/linux/sched/types.h /usr/include/linux/types.h \
+ /usr/lib/linux/uapi/x86/asm/types.h /usr/include/asm-generic/types.h \
+ /usr/include/asm-generic/int-ll64.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h \
  /usr/include/x86_64-linux-gnu/bits/cpu-set.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
@@ -210,7 +213,7 @@ CMakeFiles/bsclient.dir/client/src/main.cpp.o: \
  /usr/include/c++/14/bits/stl_multiset.h \
  /usr/include/c++/14/bits/erase_if.h /usr/include/c++/14/utility \
  /usr/include/c++/14/bits/stl_relops.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/include/../../protocol/include/protocol.hpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/../../protocol/include/protocol.hpp \
  /usr/include/c++/14/variant \
  /usr/include/c++/14/bits/enable_special_members.h \
  /usr/include/c++/14/iostream /usr/include/c++/14/filesystem \
@@ -224,4 +227,9 @@ CMakeFiles/bsclient.dir/client/src/main.cpp.o: \
  /usr/include/c++/14/bits/quoted_string.h /usr/include/c++/14/sstream \
  /usr/include/c++/14/bits/sstream.tcc /usr/include/c++/14/codecvt \
  /usr/include/c++/14/bits/fs_dir.h /usr/include/c++/14/bits/fs_ops.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/protocol/include/../../include/dotenv.h
+ /usr/include/c++/14/algorithm /usr/include/c++/14/bits/stl_algo.h \
+ /usr/include/c++/14/bits/algorithmfwd.h \
+ /usr/include/c++/14/bits/stl_heap.h \
+ /usr/include/c++/14/bits/uniform_int_dist.h \
+ /usr/include/c++/14/pstl/glue_algorithm_defs.h \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/include/../../include/dotenv.h

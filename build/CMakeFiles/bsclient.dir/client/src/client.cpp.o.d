@@ -1,7 +1,7 @@
 CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/src/client.cpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/src/client.cpp \
  /usr/include/stdc-predef.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/include/client.hpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/client.hpp \
  /usr/include/x86_64-linux-gnu/sys/socket.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -151,6 +151,9 @@ CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
  /usr/include/x86_64-linux-gnu/c++/14/bits/gthr-default.h \
  /usr/include/pthread.h /usr/include/sched.h \
  /usr/include/x86_64-linux-gnu/bits/sched.h \
+ /usr/include/linux/sched/types.h /usr/include/linux/types.h \
+ /usr/lib/linux/uapi/x86/asm/types.h /usr/include/asm-generic/types.h \
+ /usr/include/asm-generic/int-ll64.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h \
  /usr/include/x86_64-linux-gnu/bits/cpu-set.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
@@ -210,7 +213,7 @@ CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
  /usr/include/c++/14/bits/stl_multiset.h \
  /usr/include/c++/14/bits/erase_if.h /usr/include/c++/14/utility \
  /usr/include/c++/14/bits/stl_relops.h \
- /home/samargo/Documents/universidad/telematica/BattleShip/client/include/../../protocol/include/protocol.hpp \
+ /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/../../protocol/include/protocol.hpp \
  /usr/include/c++/14/variant \
  /usr/include/c++/14/bits/enable_special_members.h \
  /usr/include/c++/14/cstring /usr/include/string.h /usr/include/strings.h \
@@ -240,6 +243,7 @@ CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
  /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
  /usr/include/x86_64-linux-gnu/bits/fp-fast.h \
+ /usr/include/x86_64-linux-gnu/bits/mathcalls-macros.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
@@ -261,4 +265,6 @@ CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
  /usr/include/c++/14/bits/random.tcc /usr/include/c++/14/numeric \
  /usr/include/c++/14/bits/stl_numeric.h \
  /usr/include/c++/14/pstl/glue_numeric_defs.h /usr/include/c++/14/array \
- /usr/include/c++/14/compare
+ /usr/include/c++/14/compare /usr/include/poll.h \
+ /usr/include/x86_64-linux-gnu/sys/poll.h \
+ /usr/include/x86_64-linux-gnu/bits/poll.h
