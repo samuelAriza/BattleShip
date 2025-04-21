@@ -1,7 +1,7 @@
 CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/client/src/client.cpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/client/src/client.cpp \
  /usr/include/stdc-predef.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/client.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/client/include/client.hpp \
  /usr/include/x86_64-linux-gnu/sys/socket.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -213,7 +213,7 @@ CMakeFiles/bsclient.dir/client/src/client.cpp.o: \
  /usr/include/c++/14/bits/stl_multiset.h \
  /usr/include/c++/14/bits/erase_if.h /usr/include/c++/14/utility \
  /usr/include/c++/14/bits/stl_relops.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/client/include/../../protocol/include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/client/include/../../protocol/include/protocol.hpp \
  /usr/include/c++/14/variant \
  /usr/include/c++/14/bits/enable_special_members.h \
  /usr/include/c++/14/cstring /usr/include/string.h /usr/include/strings.h \

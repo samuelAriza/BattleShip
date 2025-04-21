@@ -1,7 +1,7 @@
 CMakeFiles/protocol.dir/protocol/src/protocol.cpp.o: \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/protocol.cpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/protocol.cpp \
  /usr/include/stdc-predef.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/protocol.hpp \
  /usr/include/c++/14/string /usr/include/c++/14/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/os_defines.h \

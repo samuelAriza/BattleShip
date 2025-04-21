@@ -1,7 +1,7 @@
 CMakeFiles/server.dir/server/src/main.cpp.o: \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/src/main.cpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/src/main.cpp \
  /usr/include/stdc-predef.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/include/server.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/include/server.hpp \
  /usr/include/x86_64-linux-gnu/sys/socket.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -221,9 +221,9 @@ CMakeFiles/server.dir/server/src/main.cpp.o: \
  /usr/include/c++/14/bits/hashtable_policy.h \
  /usr/include/c++/14/bits/enable_special_members.h \
  /usr/include/c++/14/array /usr/include/c++/14/compare \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/include/../../protocol/include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/include/../../protocol/include/protocol.hpp \
  /usr/include/c++/14/variant \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/include/../../protocol/include/game_logic.hpp \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/include/../../protocol/include/protocol.hpp \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/server/include/../../protocol/include/phase_state.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/include/../../protocol/include/game_logic.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/include/../../protocol/include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/server/include/../../protocol/include/phase_state.hpp \
  /usr/include/c++/14/optional /usr/include/c++/14/iostream

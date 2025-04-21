@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     std::cout << "Enter your email: ";
     std::getline(std::cin, email);
 
-    const std::string server_ip = "127.0.0.1";
+    const std::string server_ip = "3.90.58.28";
     const int server_port = 8080 ;
     while (true)
 {

@@ -1,8 +1,8 @@
 CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o: \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/game_logic.cpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/game_logic.cpp \
  /usr/include/stdc-predef.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/game_logic.hpp \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/game_logic.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/protocol.hpp \
  /usr/include/c++/14/string /usr/include/c++/14/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/os_defines.h \
@@ -130,7 +130,7 @@ CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o: \
  /usr/include/c++/14/exception /usr/include/c++/14/bits/exception_ptr.h \
  /usr/include/c++/14/bits/cxxabi_init_exception.h \
  /usr/include/c++/14/typeinfo /usr/include/c++/14/bits/nested_exception.h \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/phase_state.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/phase_state.hpp \
  /usr/include/c++/14/array /usr/include/c++/14/compare \
  /usr/include/c++/14/map /usr/include/c++/14/bits/stl_tree.h \
  /usr/include/c++/14/bits/node_handle.h \
@@ -178,7 +178,7 @@ CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o: \
  /usr/include/c++/14/bits/basic_ios.tcc \
  /usr/include/c++/14/bits/ostream.tcc /usr/include/c++/14/istream \
  /usr/include/c++/14/bits/istream.tcc \
- /home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/../include/protocol.hpp \
+ /home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/../include/protocol.hpp \
  /usr/include/c++/14/algorithm /usr/include/c++/14/bits/stl_algo.h \
  /usr/include/c++/14/bits/algorithmfwd.h \
  /usr/include/c++/14/bits/stl_heap.h \

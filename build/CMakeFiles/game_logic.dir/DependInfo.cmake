@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/andres/Documents/Universidad/telematica/5/BattleShip/protocol/src/game_logic.cpp" "CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o" "gcc" "CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o.d"
+  "/home/samargo/Documents/universidad/telematica/BattleShip/protocol/src/game_logic.cpp" "CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o" "gcc" "CMakeFiles/game_logic.dir/protocol/src/game_logic.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

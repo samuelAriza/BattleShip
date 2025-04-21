@@ -707,11 +707,8 @@ This project includes comprehensive automated testing using Google Test. The tes
 - Validates if parsed inputs (e.g., PLACE_SHIPS) are interpreted correctly during gameplay.
 - Validation: Message parsing and in-game execution behave consistently.\
 
-### System Tests
-Result
-
-
 ## 8 Video
+🔗 [Video](https://eafit-my.sharepoint.com/:v:/g/personal/saarizag_eafit_edu_co/EbXXWT6olTBAnFsHewrz-V0BskCWG6S2-X7cM9u2UxUOyg)
 
 ## 9 Conclusion
 The Battleship project represents a comprehensive and technically robust implementation of a networked multiplayer game, successfully integrating core concepts of distributed systems, concurrency, and custom protocol design. By leveraging the Berkeley Sockets API and C++ threading mechanisms, the system supports simultaneous game sessions, dynamic client management, and real-time state synchronization, all while maintaining scalability and responsiveness.

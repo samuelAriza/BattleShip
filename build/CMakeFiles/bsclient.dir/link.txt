@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/bsclient.dir/client/src/client.cpp.o CMakeFiles/bsclient.dir/client/src/main.cpp.o -o bsclient  libprotocol.a
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/bsclient.dir/link.d CMakeFiles/bsclient.dir/client/src/client.cpp.o CMakeFiles/bsclient.dir/client/src/main.cpp.o -o bsclient  libprotocol.a

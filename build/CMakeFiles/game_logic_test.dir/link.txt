@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/game_logic_test.dir/protocol/test/game_logic_test.cpp.o -o game_logic_test  libgame_logic.a libprotocol.a /usr/lib/x86_64-linux-gnu/libgtest.a -lpthread
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/game_logic_test.dir/link.d CMakeFiles/game_logic_test.dir/protocol/test/game_logic_test.cpp.o -o game_logic_test  libgame_logic.a libprotocol.a /usr/local/lib/libgtest.a -lpthread
