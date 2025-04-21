@@ -5,6 +5,7 @@
   - [1.2 Project Overview](#12-project-overview)
   - [1.3 Scope and Objectives](#13-scope-and-objectives)
   - [1.4 Audience](#14-audience)
+  - [1.5 Project Structure](#15-project-structure)
 - [2. System Overview](#2-system-overview)
   - [2.1 High-Level Description of the Battleship Game](#21-high-level-description-of-the-battleship-game)
   - [2.2 Key Features and Functionality](#22-key-features-and-functionality)
@@ -66,6 +67,49 @@ This document is intended for:
 - Instructors and Evaluators: Faculty members assessing the project against academic and technical criteria.
 
 - Future Developers: Individuals who may extend or maintain the system, requiring insight into its design and implementation.
+
+### 1.5 Project Structure
+The directory and file structure of the project is shown below:
+```
+BATTLESHIP
+├── assets
+├── build
+├── client
+│   ├── include
+│   │   ├── client.hpp
+│   ├── logs
+│   │   ├── client.log
+│   ├── src
+│   │   ├── client.cpp
+│   │   └── main.cpp
+├── include
+│   ├── dotenv.h
+│── protocol
+│   ├── include
+│   │   ├── game_logic.hpp
+│   │   ├── phase_state.hpp
+│   │   └── protocol.hpp
+│   ├── src
+│   │   ├── game_logic.cpp
+│   │   ├── phase_state.cpp
+│   │   └── protocol.cpp
+│   ├── test
+│   │   ├── game_logic_test.cpp
+│   │   ├── phase_state_test.cpp
+│   │   └── protocol_test.cpp
+│── server
+│   ├── include
+│   │   ├── server.hpp
+│   ├── logs
+│       │   ├── server.log
+│   ├── src
+│   ├── main.cpp
+│    ├── server.cpp
+├── env
+├── .gitignore
+├── CMakeLists.txt
+└── README.md
+```
 
 
 ## 2. System Overview
